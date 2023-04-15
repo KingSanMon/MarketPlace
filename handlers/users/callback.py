@@ -10,10 +10,13 @@ import datetime
 @dp.callback_query_handler(text="profile_button")
 async def process_profile_command(call: types.CallbackQuery):
     date_register = db.get("SELECT date_register FROM users WHERE user_id = ?", (call.from_user.id,))
+    balance = db.get("SELECT balance FROM users WHERE user_id = ?", (call.from_user.id,))
+    for balance in balance:
+        pass
     for x in date_register:
         date = datetime.datetime.fromtimestamp(x).strftime('%d-%m-%Y')
     await call.message.edit_text(
-        f"👤Информация о пользователе: \n📃Логин пользователя: {call.from_user.username}\n⏳Дата регистрации: {date}\n👑Количество проведенных сделок: 0\n💵Баланс: 0$\n⚖Сколько всего выведено в бота: 0$\n⚖Сколько всего введено в бота: 0$",
+        f"👤Информация о пользователе: \n📃Логин пользователя: {call.from_user.username}\n⏳Дата регистрации: {date}\n👑Количество проведенных сделок: 0\n💵Баланс: {balance}$\n⚖Сколько всего выведено в бота: 0$\n⚖Сколько всего введено в бота: 0$",
         parse_mode="html",
         reply_markup = profile_keyboard
     )
@@ -21,7 +24,7 @@ async def process_profile_command(call: types.CallbackQuery):
 @dp.callback_query_handler(text="support_button")
 async def process_support_command(call: types.CallbackQuery):
     await call.message.edit_text(
-        '👤 Контакты нашей поддержки',
+        f"👤 Контакты нашей поддержки:\n@wolfsblood550 - Главный администратор\n@lolzcoder_star - Директор\nПо всем вопросам обращаться к администратору, по поводу ошибок обращаться к деректору",
         parse_mode="html",
         reply_markup = support_keyboard
     )
@@ -53,7 +56,7 @@ async def process_referal_command(call: types.CallbackQuery):
 @dp.callback_query_handler(text="guarantee_deal_button")
 async def process_guarntee_command(call: types.CallbackQuery):
     await call.message.edit_text(
-        '👨‍👩‍👧‍👦 Выберите роль: ',
+        '📬 Создайте заявку на сделку: ',
         parse_mode="html",
         reply_markup = guarantee_deal_keyboard
     )
@@ -112,21 +115,13 @@ async def process_your_referals_command(call: types.CallbackQuery):
 
 #КНОПКИ СДЕЛКИ С ГАРАНТОМ
     
-@dp.callback_query_handler(text="buyer_button")
-async def process_buyer_command(call: types.CallbackQuery):
-    await call.message.edit_text(
-        '💵 Введите сумму сделки:',
-        parse_mode="html",
-        reply_markup = buyer_keyboard
-    )
+# загрузка суммы   
+@dp.callback_query_handler(text="buyer_button", state=None)
+async def start_deal(call: types.CallbackQuery, state: FSMContext):   
+    await call.message.edit_text("💵 Введите сумму сделки:\n🔵пример: 🔘20  🔘20.20🔵")
+    await StateMessage.translation.set()
+
     
-@dp.callback_query_handler(text="seller_button")
-async def process_seller_command(call: types.CallbackQuery):
-    await call.message.edit_text(
-        '💵 Введите сумму сделки:',
-        parse_mode="html",
-        reply_markup = seller_keyboard
-    )
 
 #   КНОПКИ НАЗАД
 
@@ -149,7 +144,7 @@ async def process_backReferalMenu_command(call: types.CallbackQuery):
 @dp.callback_query_handler(text="backGuaranteeMenu")
 async def process_backGuaranteeMenu_command(call: types.CallbackQuery):
     await call.message.edit_text(
-        '👨‍👩‍👧‍👦 Выберите роль: ',
+        '📬 Создайте заявку на сделку: ',
         parse_mode="html",
         reply_markup = guarantee_deal_keyboard
     )

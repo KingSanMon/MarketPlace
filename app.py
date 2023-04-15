@@ -4,7 +4,6 @@ from loader import dp
 from handlers.admin import *
 from handlers.users import *
 from filters.filters import *
-import logging
 
 from commands.set_bot_commands import set_default_commands
 # from middleware.middleware import UserBanned
