@@ -5,6 +5,10 @@ class DataBase:
 
         self.con = sqlite3.connect("database.db")
         self.cur = self.con.cursor()
+        
+    def count_referals(self, user_id):
+        with self.con:
+            return self.cur.execute("SELECT COUNT(id) as count FROM users WHERE referrer_id = ?", (user_id,)).fetchone()[0]
 
     def change(self, query, values):
         """Изменение базы данных (Insert, Update, Alert)"""

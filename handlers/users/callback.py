@@ -4,13 +4,16 @@ from aiogram.dispatcher import filters
 from keyboards.keyboard import *
 from states.States import *
 from loader import dp, db, bot
-from datetime import datetime
 import config as cfg
+import datetime
 
 @dp.callback_query_handler(text="profile_button")
 async def process_profile_command(call: types.CallbackQuery):
+    date_register = db.get("SELECT date_register FROM users WHERE user_id = ?", (call.from_user.id,))
+    for x in date_register:
+        date = datetime.datetime.fromtimestamp(x).strftime('%d-%m-%Y')
     await call.message.edit_text(
-        f"👤Информация о пользователе: \n📃Логин пользователя: {call.from_user.username}\n⏳Дата регистрации: \n👑Количество проведенных сделок: 0\n💵Баланс: 0$\n⚖Сколько всего выведено в бота: 0$\n⚖Сколько всего введено в бота: 0$",
+        f"👤Информация о пользователе: \n📃Логин пользователя: {call.from_user.username}\n⏳Дата регистрации: {date}\n👑Количество проведенных сделок: 0\n💵Баланс: 0$\n⚖Сколько всего выведено в бота: 0$\n⚖Сколько всего введено в бота: 0$",
         parse_mode="html",
         reply_markup = profile_keyboard
     )
@@ -102,7 +105,7 @@ async def process_add_product_command(call: types.CallbackQuery):
 @dp.callback_query_handler(text="your_referals_button")
 async def process_your_referals_command(call: types.CallbackQuery):
     await call.message.edit_text(
-        '👨‍👩‍👧‍👦 Кол-во рефералов: 0',
+        f"👨‍👩‍👧‍👦 Кол-во рефералов: {db.count_referals(call.from_user.id)}",
         parse_mode="html",
         reply_markup = your_referals_keyboard
     )
