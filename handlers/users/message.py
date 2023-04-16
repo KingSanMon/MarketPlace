@@ -55,13 +55,21 @@ async def add_translation(message: types.Message, state: FSMContext):
 async def add_username(message: types.Message, state: FSMContext):
     
     await state.update_data(nickname=message.text)
-    await message.answer("❇️⚜️Введите условие сделки⚜️❇️\nпримечание: при каком условии вы хотите получить товар")
+    await message.answer(
+        "❇️⚜️Введите условие сделки⚜️❇️\nпримечание: при каком условии вы хотите получить товар"
+        )
     await StateMessage.description.set()
     
-@dp.message_handler(state=StateMessage.nickname)
+@dp.message_handler(state=StateMessage.description)
 async def add_description(message: types.Message, state: FSMContext):
     
+    data = await state.get_data()
     await state.update_data(description=message.text)
-    await state.finish()
-    
-    
+    await message.answer(
+        f"Отправить запрос на сделку пользователю: {data['nickname']}? ",
+        reply_markup = InlineKeyboardMarkup(row_width=1).add(
+            InlineKeyboardButton("📦Отпрвить запрос на сделку", callback_data="endЕransaction"),
+            InlineKeyboardButton("❌Отменить, выйти в главное меню❌", callback_data="backMenu")
+            )
+        )
+    await StateMessage.end.set()  

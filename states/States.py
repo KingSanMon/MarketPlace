@@ -4,3 +4,4 @@ class StateMessage(StatesGroup):
     translation = State()
     nickname = State()
     description = State()
+    end = State()

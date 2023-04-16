@@ -56,7 +56,7 @@ async def process_referal_command(call: types.CallbackQuery):
 @dp.callback_query_handler(text="guarantee_deal_button")
 async def process_guarntee_command(call: types.CallbackQuery):
     await call.message.edit_text(
-        '📬 Создайте заявку на сделку: ',
+        '🛒Желаете создать заявку на сделку с пользователем?🛒',
         parse_mode="html",
         reply_markup = guarantee_deal_keyboard
     )
@@ -121,18 +121,35 @@ async def start_deal(call: types.CallbackQuery, state: FSMContext):
     await call.message.edit_text("💵 Введите сумму сделки:\n🔵пример: 🔘20  🔘20.20🔵")
     await StateMessage.translation.set()
 
-    
+# окончание состояния
+@dp.callback_query_handler(state=StateMessage.end, text=["endЕransaction"])
+async def call_sss(call: types.CallbackQuery, state: FSMContext):
+    data = await state.get_data()
+    await call.message.edit_text(
+        f"💵Сумма сделки: {data['translation']}\n🪪ник получателя: {data['nickname']}\n📄описание сделки: {data['description']}",
+        reply_markup = return_menu
+    )
+    await state.finish()  
 
 #   КНОПКИ НАЗАД
 
-@dp.callback_query_handler(text="backMenu")
+@dp.callback_query_handler(state=StateMessage.end, text=["backMenu"])
+async def process_backMenu_command(call: types.CallbackQuery, state: FSMContext):
+    await call.message.edit_text(
+        f"Приветствуем вас в <b>нашем маркете!</b> Выберете пункт меню, необходимый вам!🤑",
+        parse_mode="html",
+        reply_markup = start_keyboard
+    )
+    await state.finish() 
+
+@dp.callback_query_handler(text="backMenu_after_deal")
 async def process_backMenu_command(call: types.CallbackQuery):
     await call.message.edit_text(
         f"Приветствуем вас в <b>нашем маркете!</b> Выберете пункт меню, необходимый вам!🤑",
         parse_mode="html",
         reply_markup = start_keyboard
     )
-    
+
 @dp.callback_query_handler(text="backReferalMenu")
 async def process_backReferalMenu_command(call: types.CallbackQuery):
     await call.message.edit_text(

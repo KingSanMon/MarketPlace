@@ -73,6 +73,10 @@ my_purchases_keyboard = InlineKeyboardMarkup(row_width=2)
 my_purchases_keyboard.add(
     InlineKeyboardButton(text="💢 Назад", callback_data="backMenu")
     )
+return_menu = InlineKeyboardMarkup(row_width=2)
+return_menu.add(
+    InlineKeyboardButton(text="💢 Вернутся в главное меню", callback_data="backMenu_after_deal")
+    )
 
 market_keyboard = InlineKeyboardMarkup(row_width=2)
 market_keyboard.add(
@@ -97,3 +101,4 @@ add_your_product_keyboard = InlineKeyboardMarkup(row_width=2)
 add_your_product_keyboard.add(
     InlineKeyboardButton(text="💢 Назад", callback_data="backProductMenu")
     )
+
