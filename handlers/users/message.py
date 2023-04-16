@@ -69,7 +69,7 @@ async def add_description(message: types.Message, state: FSMContext):
         f"Отправить запрос на сделку пользователю: {data['nickname']}? ",
         reply_markup = InlineKeyboardMarkup(row_width=1).add(
             InlineKeyboardButton("📦Отпрвить запрос на сделку", callback_data="endЕransaction"),
-            InlineKeyboardButton("❌Отменить, выйти в главное меню❌", callback_data="backMenu")
+            InlineKeyboardButton("❌Отменить, выйти в главное меню❌", callback_data="backMenu_after_deal")
             )
         )
     await StateMessage.end.set()  

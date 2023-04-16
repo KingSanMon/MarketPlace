@@ -127,13 +127,13 @@ async def call_sss(call: types.CallbackQuery, state: FSMContext):
     data = await state.get_data()
     await call.message.edit_text(
         f"💵Сумма сделки: {data['translation']}\n🪪ник получателя: {data['nickname']}\n📄описание сделки: {data['description']}",
-        reply_markup = return_menu
+        reply_markup = my_purchases_keyboard
     )
     await state.finish()  
 
 #   КНОПКИ НАЗАД
 
-@dp.callback_query_handler(state=StateMessage.end, text=["backMenu"])
+@dp.callback_query_handler(state=StateMessage.end, text=["backMenu_after_deal"]) 
 async def process_backMenu_command(call: types.CallbackQuery, state: FSMContext):
     await call.message.edit_text(
         f"Приветствуем вас в <b>нашем маркете!</b> Выберете пункт меню, необходимый вам!🤑",
@@ -142,7 +142,7 @@ async def process_backMenu_command(call: types.CallbackQuery, state: FSMContext)
     )
     await state.finish() 
 
-@dp.callback_query_handler(text="backMenu_after_deal")
+@dp.callback_query_handler(text="backMenu")
 async def process_backMenu_command(call: types.CallbackQuery):
     await call.message.edit_text(
         f"Приветствуем вас в <b>нашем маркете!</b> Выберете пункт меню, необходимый вам!🤑",
