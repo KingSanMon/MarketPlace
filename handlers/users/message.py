@@ -43,12 +43,19 @@ async def process_start_command(message: types.Message):
 @dp.message_handler(state=StateMessage.translation)
 async def add_translation(message: types.Message, state: FSMContext):   
 
+# проверка хватает у юхера денег или нет
+    subtraction_balance = db.get("SELECT balance FROM users WHERE user_id = ?", (message.from_user.id,))
+    for subtraction_balance in subtraction_balance:
+        pass
     if  message.text.replace(".", "", 1).isdigit() == False:
-        await message.answer("❌Нельзя вводить ничего кроче числа❌")
+        await message.answer("🟥 Нельзя вводить ничего кроче числа 🟥")
     else:
-        await state.update_data(translation=message.text)
-        await message.answer("🪪Введите nickname пользователя🪪\n🔵пример: lolzcoder_star🔵\n")
-        await StateMessage.nickname.set()
+        if subtraction_balance < float(message.text):
+            await message.answer("На счету не достаточно средств")
+        else:
+            await state.update_data(translation=message.text)
+            await message.answer("◻️Введите NickName пользователя\n◼Важно: вводить nickname без '@'\n🔸Пример ввода: lolzcoder_star")
+            await StateMessage.nickname.set()
     
 # записываем пользователя которого указали    
 @dp.message_handler(state=StateMessage.nickname)
@@ -56,10 +63,10 @@ async def add_username(message: types.Message, state: FSMContext):
     
     user = db.get("SELECT login FROM users WHERE login = ?", (message.text,))
     if not user:
-        await message.answer(f"пользователь: @{message.text} не зарегистрирован\n")
+        await message.answer(f"🚷Пользователь с ником: @{message.text} не зарегистрирован🚷")
     else:
         await state.update_data(nickname=message.text)
-        await message.answer(f"Подтвердите nickname: @{message.text}\nВведите nickname повторно")
+        await message.answer(f"◽️Для потверждения NickName: @{message.text}\n🔸Введите NickName повторно")
         await StateMessage.userid.set()
     
 # получаем по нику id пользователя   
@@ -69,10 +76,10 @@ async def add_user_id(message: types.Message, state: FSMContext):
     data = await state.get_data()
     user_id = db.get("SELECT user_id FROM users WHERE login = ?", (data['nickname'],))
     if message.text != data['nickname']:
-            await message.answer("введен не тот ник")
+            await message.answer("🔸Введите NickName пользователя коректно🔸")
     else:
         await state.update_data(userid=user_id)
-        await message.answer("❇️⚜️Введите условие сделки⚜️❇️\nпримечание: при каком условии вы хотите получить товар")
+        await message.answer("⚪️Введите условие сделки⚫\n🔸Описание: при каком условии состоится сделка")
         await StateMessage.description.set()
 
 @dp.message_handler(state=StateMessage.description)
@@ -81,10 +88,10 @@ async def add_description(message: types.Message, state: FSMContext):
     data = await state.get_data()
     await state.update_data(description=message.text)
     await message.answer(
-        f"Отправить запрос на сделку пользователю: @{data['nickname']}? ",
+        f"📣Отправить запрос на сделку пользователю: @{data['nickname']}?",
         reply_markup = InlineKeyboardMarkup(row_width=2).add(
-            InlineKeyboardButton("📦Отпрвить запрос", callback_data="endЕransaction"),
-            InlineKeyboardButton("❌Отменить❌", callback_data="backMenu_after_deal")
+            InlineKeyboardButton("🟢Подтвердить сделку", callback_data="endЕransaction"),
+            InlineKeyboardButton("🔴Отменить", callback_data="backMenu_after_deal")
             )
         )
     await StateMessage.end.set()  

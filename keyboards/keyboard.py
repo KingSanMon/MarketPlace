@@ -53,10 +53,10 @@ your_referals_keyboard.add(
     InlineKeyboardButton(text="💢 Назад", callback_data="backReferalMenu")
     )
 
-guarantee_deal_keyboard = InlineKeyboardMarkup(row_width=1)
+guarantee_deal_keyboard = InlineKeyboardMarkup(row_width=2)
 guarantee_deal_keyboard.add(
-    InlineKeyboardButton(text="📬Создать заявку на сделку📬", callback_data="buyer_button"),
-    InlineKeyboardButton(text="💢 Назад", callback_data="backMenu")
+    InlineKeyboardButton(text="🟢 Создать сделку", callback_data="buyer_button"),
+    InlineKeyboardButton(text="🔴 Вернуться в меню", callback_data="backMenu")
     )
 
 buyer_keyboard = InlineKeyboardMarkup(row_width=2)
@@ -101,4 +101,8 @@ add_your_product_keyboard = InlineKeyboardMarkup(row_width=2)
 add_your_product_keyboard.add(
     InlineKeyboardButton(text="💢 Назад", callback_data="backProductMenu")
     )
-
+no_money = InlineKeyboardMarkup(row_width=2)
+no_money.add(
+    InlineKeyboardButton(text="Вернутся в меню", callback_data="backMenu"),
+    InlineKeyboardButton(text="Пополнить", callback_data="add_balance_button")
+    )

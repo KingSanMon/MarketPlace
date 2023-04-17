@@ -9,6 +9,7 @@ import datetime
 
 @dp.callback_query_handler(text="profile_button")
 async def process_profile_command(call: types.CallbackQuery):
+    
     date_register = db.get("SELECT date_register FROM users WHERE user_id = ?", (call.from_user.id,))
     balance = db.get("SELECT balance FROM users WHERE user_id = ?", (call.from_user.id,))
     transactions = db.get("SELECT number_transactions FROM users WHERE user_id = ?", (call.from_user.id,))
@@ -18,6 +19,7 @@ async def process_profile_command(call: types.CallbackQuery):
         date = datetime.datetime.fromtimestamp(x).strftime('%d-%m-%Y')
     for transactions in transactions:
         pass
+    
     await call.message.edit_text(
         f"👤Информация о пользователе: \n📃Логин пользователя: {call.from_user.username}\n⏳Дата регистрации: {date}\n👑Количество проведенных сделок: {transactions}\n💵Баланс: {balance}$\n⚖Сколько всего выведено в бота: 0$\n⚖Сколько всего введено в бота: 0$",
         parse_mode="html",
@@ -59,7 +61,7 @@ async def process_referal_command(call: types.CallbackQuery):
 @dp.callback_query_handler(text="guarantee_deal_button")
 async def process_guarntee_command(call: types.CallbackQuery):
     await call.message.edit_text(
-        '🛒Желаете создать заявку на сделку с пользователем?🛒',
+        '▪ Создать сделку с пользователем ▫\n🔸Важно: Следуйте инструкции для предотвращения нежелательных ошибок',
         parse_mode="html",
         reply_markup = guarantee_deal_keyboard
     )
@@ -120,28 +122,54 @@ async def process_your_referals_command(call: types.CallbackQuery):
     
 # загрузка суммы   
 @dp.callback_query_handler(text="buyer_button", state=None)
-async def start_deal(call: types.CallbackQuery, state: FSMContext):   
-    await call.message.edit_text("💵 Введите сумму сделки:\n🔵пример: 🔘20  🔘20.20🔵")
-    await StateMessage.translation.set()
+async def start_deal(call: types.CallbackQuery, state: FSMContext):
+
+# если у пользователя нету денег он не сможет начать сделку
+    subtraction_balance = db.get("SELECT balance FROM users WHERE user_id = ?", (call.from_user.id,))
+    for subtraction_balance in subtraction_balance:
+        pass
+    if subtraction_balance <= 0:       
+        await call.message.edit_text("Нельзя начать сделку с 0$ на счету\nС перва пополните счет",
+                                     reply_markup = no_money
+                                     )
+    else:
+        await call.message.edit_text("▫Введите сумму сделки:\n▪пример: 🔸5$ / 🔸$5.23\n◼Важно: вводить без знака '$'")
+        await StateMessage.translation.set()
 
 # окончание состояния
 @dp.callback_query_handler(state=StateMessage.end, text=["endЕransaction"])
 async def call_sss(call: types.CallbackQuery, state: FSMContext):
+
+# когда сделка отправлена минусуем счет отправителя
     data = await state.get_data()
+    subtraction_balance = db.get("SELECT balance FROM users WHERE user_id = ?", (call.from_user.id,))
+    for subtraction_balance in subtraction_balance:
+        pass
+    updated_balance = subtraction_balance - float(data['translation'])
+    db.change("UPDATE users SET balance = ? WHERE user_id = ?", (updated_balance, call.from_user.id))
+    
     await call.message.edit_text(
-        f"💵Сумма сделки: {data['translation']}$\n🪪ник получателя: @{data['nickname']}\n📄Описание сделки: {data['description']}",
+        f"▫Сумма сделки: {data['translation']}$\n◻NickName получателя: @{data['nickname']}\n⚪Условие сделки: {data['description']}",
         reply_markup = my_purchases_keyboard
     )
     await bot.send_message(data['userid'][0],
-                f"Вам пришел новый запрос на сделку\n💵Cумма сделки: {data['translation']}$\n🪪Отправитель: @{call.from_user.username}\n📄Условие сделки: {data['description']}",
+                f"🔔Вам пришел новый запрос на сделку\n▫Cумма сделки: {data['translation']}$\n◻Отправитель: @{call.from_user.username}\n⚪Условие сделки: {data['description']}",
                 reply_markup = InlineKeyboardMarkup(row_width=1).add(
-                        InlineKeyboardButton("Закрыть сделку", callback_data="endЕransaction_users")
+                        InlineKeyboardButton("🟩Подтвердить сделку", callback_data="start_deal"),
+                        InlineKeyboardButton("🟥Отказаться от сделки", callback_data="refuse_deal")
                     )           
                 )
     await state.finish()
     
+@dp.callback_query_handler(text=["start_deal"]) 
+async def process_start_deal(call: types.CallbackQuery):
+      
+    await bot.send_message(call.from_user.id, f"Пользователь @{call.from_user.username} подтвердил сделку")
     
-
+@dp.callback_query_handler(text=["refuse_deal"]) 
+async def process_refus_deal(call: types.CallbackQuery):
+    
+    await bot.send_message(call.from_user.id, f"Пользователь @{call.from_user.username} отказался от сделки")
 
 #   КНОПКИ НАЗАД
 
