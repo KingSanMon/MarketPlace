@@ -6,3 +6,13 @@ class StateMessage(StatesGroup):
     userid = State()
     description = State()
     end = State()
+    
+class GoodsMarket(StatesGroup):
+    namegoods = State()
+    description = State()
+    abouеseller = State()
+    price = State()
+    end = State()
+    
+    
+    

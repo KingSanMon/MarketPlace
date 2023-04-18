@@ -86,11 +86,18 @@ async def process_market_command(call: types.CallbackQuery):
     
 @dp.callback_query_handler(text="accounts_button")
 async def process_accounts_command(call: types.CallbackQuery):
+    
     await call.message.edit_text(
-        'Список всех товаров по выбранной вами тематике:',
-        parse_mode="html",
-        reply_markup = accounts_keyboard
-    )
+          f"🔶Выберите действие: ",
+         reply_markup = accounts_keyboard
+     )
+
+@dp.callback_query_handler(text="accounts")
+async def all_products(call: types.CallbackQuery):
+    
+    data = db.get("SELECT * FROM products", (), False)
+    await call.message.edit_text("◽️◼️◽️Список товаров по разделу аккаунты:◽️◼️◽️", reply_markup=genmarkup(data))  
+
     
 @dp.callback_query_handler(text="manuals_button")
 async def process_manuals_command(call: types.CallbackQuery):
@@ -99,15 +106,33 @@ async def process_manuals_command(call: types.CallbackQuery):
         parse_mode="html",
         reply_markup = manuals_keyboard
     )
-
-@dp.callback_query_handler(text="add_your_product_button")
-async def process_add_product_command(call: types.CallbackQuery):
+    
+@dp.callback_query_handler(text="cancel_product", state=GoodsMarket.end)
+async def process_manuals_command(call: types.CallbackQuery, state: FSMContext):
     await call.message.edit_text(
-        'Введите название товара:',
+        'Список всех товаров по выбранной вами тематике:',
         parse_mode="html",
-        reply_markup = add_your_product_keyboard
-    )
+        reply_markup = manuals_keyboard
+        )
+    await state.finish()
+# Процесс создания товара на рынок
 
+@dp.callback_query_handler(text="add_your_product_button", state=None)
+async def process_add_product_command(call: types.CallbackQuery, state: FSMContext):
+    await call.message.edit_text('Введите название товара:')
+    await GoodsMarket.namegoods.set()
+    
+@dp.callback_query_handler(text="display_product", state=GoodsMarket.end)
+async def end_creation(call: types.CallbackQuery, state: FSMContext):
+    
+    data = await state.get_data()
+    db.change(f"INSERT INTO products VALUES(NULL, ?, ?, ?, ?)", (data['namegoods'], data['description'], data['abouеseller'], data['price'],))
+    await call.message.edit_text(
+        f"Инфорамция о вашем товаре\nНазвание: {data['namegoods']}\nОписание: {data['description']}\nО продавце: {data['abouеseller']}\nЦена: {data['price']}$",
+        reply_markup = products
+        )
+    await state.finish()
+    
 #Кнопки реферальной системы
 
 @dp.callback_query_handler(text="your_referals_button")
@@ -155,21 +180,29 @@ async def call_sss(call: types.CallbackQuery, state: FSMContext):
     await bot.send_message(data['userid'][0],
                 f"🔔Вам пришел новый запрос на сделку\n▫Cумма сделки: {data['translation']}$\n◻Отправитель: @{call.from_user.username}\n⚪Условие сделки: {data['description']}",
                 reply_markup = InlineKeyboardMarkup(row_width=1).add(
-                        InlineKeyboardButton("🟩Подтвердить сделку", callback_data="start_deal"),
+                        InlineKeyboardButton("🟩Подтвердить сделку", callback_data=f"done_{data['userid']}"),
                         InlineKeyboardButton("🟥Отказаться от сделки", callback_data="refuse_deal")
                     )           
                 )
     await state.finish()
     
-@dp.callback_query_handler(text=["start_deal"]) 
-async def process_start_deal(call: types.CallbackQuery):
-      
-    await bot.send_message(call.from_user.id, f"Пользователь @{call.from_user.username} подтвердил сделку")
+@dp.callback_query_handler(filters.Regexp("done*"))
+async def callback_query(call: types.CallbackQuery):
+    
+     # Получаем передаваемые параметры
+    params = call.data.split("_")
+    
+     # Получаем информацию о пользователе
+    user = db.get("SELECT * FROM users WHERE user_id = ?", (params[1],))
+    
+    await call.message.answer(f"{call.message.caption}\n\n✅ Заявка принята",
+                                reply_markup=None
+    )
     
 @dp.callback_query_handler(text=["refuse_deal"]) 
 async def process_refus_deal(call: types.CallbackQuery):
     
-    await bot.send_message(call.from_user.id, f"Пользователь @{call.from_user.username} отказался от сделки")
+    await bot.send_message(call.from_user.id, f"🟥Пользователь @{call.from_user.username} отказался от сделки")
 
 #   КНОПКИ НАЗАД
 

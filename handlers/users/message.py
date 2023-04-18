@@ -94,4 +94,41 @@ async def add_description(message: types.Message, state: FSMContext):
             InlineKeyboardButton("🔴Отменить", callback_data="backMenu_after_deal")
             )
         )
-    await StateMessage.end.set()  
+    await StateMessage.end.set()
+ 
+# Добавление товара на рынок
+@dp.message_handler(state=GoodsMarket.namegoods)
+async def add_name_goods(message: types.Message, state: FSMContext):
+    
+    await state.update_data(namegoods=message.text)
+    await message.answer("Введите описание товара: ")
+    await GoodsMarket.description.set()
+    
+@dp.message_handler(state=GoodsMarket.description)
+async def add_description(message: types.Message, state: FSMContext):
+    
+    await state.update_data(description=message.text)
+    await message.answer("Напишите о себе: ")
+    await GoodsMarket.abouеseller.set()
+    
+@dp.message_handler(state=GoodsMarket.abouеseller)
+async def add_description(message: types.Message, state: FSMContext):
+    
+    await state.update_data(abouеseller=message.text)
+    await message.answer("Введите цену на товар: ")
+    await GoodsMarket.price.set()
+    
+@dp.message_handler(state=GoodsMarket.price)
+async def add_description(message: types.Message, state: FSMContext):
+    
+    data = await state.get_data()
+    await state.update_data(price=message.text)
+    await message.answer(
+        f"Выставить товар на рынок?",
+        reply_markup = InlineKeyboardMarkup(row_width=2).add(
+            InlineKeyboardButton("🟢Выставить товар", callback_data="display_product"),
+            InlineKeyboardButton("🔴Отменить", callback_data="cancel_product")
+            )
+        
+        )
+    await GoodsMarket.end.set()
