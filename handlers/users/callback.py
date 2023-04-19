@@ -165,23 +165,24 @@ async def start_deal(call: types.CallbackQuery, state: FSMContext):
 @dp.callback_query_handler(state=StateMessage.end, text=["endЕransaction"])
 async def call_sss(call: types.CallbackQuery, state: FSMContext):
 
-# когда сделка отправлена минусуем счет отправителя
     data = await state.get_data()
-    subtraction_balance = db.get("SELECT balance FROM users WHERE user_id = ?", (call.from_user.id,))
-    for subtraction_balance in subtraction_balance:
-        pass
-    updated_balance = subtraction_balance - float(data['translation'])
-    db.change("UPDATE users SET balance = ? WHERE user_id = ?", (updated_balance, call.from_user.id))
+#     subtraction_balance = db.get("SELECT balance FROM users WHERE user_id = ?", (call.from_user.id,))
+#     for subtraction_balance in subtraction_balance:
+#         pass
+#     updated_balance = subtraction_balance - float(data['translation'])
+#     db.change("UPDATE users SET balance = ? WHERE user_id = ?", (updated_balance, call.from_user.id))
     
     await call.message.edit_text(
         f"▫Сумма сделки: {data['translation']}$\n◻NickName получателя: @{data['nickname']}\n⚪Условие сделки: {data['description']}",
         reply_markup = my_purchases_keyboard
     )
+    money = data['translation']
+    db.change("UPDATE users SET summ_input = ? WHERE user_id = ?", (money, call.from_user.id,))
     await bot.send_message(data['userid'][0],
                 f"🔔Вам пришел новый запрос на сделку\n▫Cумма сделки: {data['translation']}$\n◻Отправитель: @{call.from_user.username}\n⚪Условие сделки: {data['description']}",
                 reply_markup = InlineKeyboardMarkup(row_width=1).add(
-                        InlineKeyboardButton("🟩Подтвердить сделку", callback_data=f"done_{data['userid']}"),
-                        InlineKeyboardButton("🟥Отказаться от сделки", callback_data="refuse_deal")
+                        InlineKeyboardButton("🟩Подтвердить сделку", callback_data=f"done_{call.from_user.id}"),
+                        InlineKeyboardButton("🟥Отказаться от сделки", callback_data=f"cencel_{call.from_user.id}")
                     )           
                 )
     await state.finish()
@@ -191,18 +192,66 @@ async def callback_query(call: types.CallbackQuery):
     
      # Получаем передаваемые параметры
     params = call.data.split("_")
+
+    balance = db.get("SELECT balance FROM users WHERE user_id = ?", (params[1],))
+    summ_input = db.get("SELECT summ_input FROM users WHERE user_id = ?", (params[1],))
     
-     # Получаем информацию о пользователе
-    user = db.get("SELECT * FROM users WHERE user_id = ?", (params[1],))
+#   когда пользователь принимает запрос, то у того кто отправил запрос списывается счет
+    for balance in balance:
+        pass
+    for summ in summ_input:
+        pass
     
-    await call.message.answer(f"{call.message.caption}\n\n✅ Заявка принята",
+    newsumm = balance - summ
+    
+    db.change("UPDATE users SET balance = ? WHERE user_id = ?", (newsumm, params[1],))
+    
+    await bot.send_message(params[1],
+                f"\n\n🟩 Пользователь {call.from_user.username} согласился на сделку",
+                reply_markup=InlineKeyboardMarkup(row_width=2).add(
+                        InlineKeyboardButton("Завершить сделку", callback_data=f"addbalance_{call.from_user.id}"),
+                        InlineKeyboardButton("Открыть спор", callback_data="nohoh")
+                    )
+                )
+    
+@dp.callback_query_handler(filters.Regexp("addbalance*"))
+async def callback_query(call: types.CallbackQuery):
+    
+    params = call.data.split("_")
+        
+    replenishment = db.get("SELECT summ_input FROM users WHERE user_id = ?", (call.from_user.id,))
+    user_recipient = db.get("SELECT balance FROM users WHERE user_id = ?", (params[1],))
+    for replenishment in replenishment:
+        pass
+    for user_recipient in user_recipient:
+        pass
+    await bot.send_message(params[1], f"Сделка состоялась! ваш счет пополнен на {replenishment}$", reply_markup = start_keyboard)
+    await call.message.edit_text(f"Сделка состоялась, с вашего счета списано: {replenishment}$", reply_markup = start_keyboard)
+    
+    newbalance = user_recipient + replenishment
+
+    onenumber_transactions = db.get("SELECT number_transactions FROM users WHERE user_id = ?", (params[1],))
+    twonumber_transactions = db.get("SELECT number_transactions FROM users WHERE user_id = ?", (call.from_user.id,))
+    for onenumber_transactions in onenumber_transactions:
+        pass
+    for twonumber_transactions in twonumber_transactions:
+        pass
+    onenumber_transactions = onenumber_transactions + 1
+    twonumber_transactions = twonumber_transactions + 1
+    
+    db.change("UPDATE users SET balance = ? WHERE user_id = ?", (newbalance, params[1],))
+    db.change("UPDATE users SET summ_input = ? WHERE user_id = ?", (0, call.from_user.id,))
+    db.change("UPDATE users SET number_transactions = ? WHERE user_id = ?", (onenumber_transactions, params[1],))
+    db.change("UPDATE users SET number_transactions = ? WHERE user_id = ?", (twonumber_transactions, call.from_user.id,))
+    
+@dp.callback_query_handler(filters.Regexp("cencel*"))
+async def callback_query(call: types.CallbackQuery):
+    
+     # Получаем передаваемые параметры
+    params = call.data.split("_")   
+    await bot.send_message(params[1], f"\n\n🟥 Пользователь: {call.from_user.username} отклонил сделку",
                                 reply_markup=None
     )
-    
-@dp.callback_query_handler(text=["refuse_deal"]) 
-async def process_refus_deal(call: types.CallbackQuery):
-    
-    await bot.send_message(call.from_user.id, f"🟥Пользователь @{call.from_user.username} отказался от сделки")
 
 #   КНОПКИ НАЗАД
 
