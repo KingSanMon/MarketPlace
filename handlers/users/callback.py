@@ -158,26 +158,31 @@ async def start_deal(call: types.CallbackQuery, state: FSMContext):
                                      reply_markup = no_money
                                      )
     else:
-        await call.message.edit_text("▫Введите сумму сделки:\n▪пример: 🔸5$ / 🔸$5.23\n◼Важно: вводить без знака '$'")
-        await StateMessage.translation.set()
+        transaction_status = db.get("SELECT transaction_status FROM users WHERE user_id = ?", (call.from_user.id,))
+        for i in transaction_status:
+            pass
+        if i == 1:
+            await call.message.edit_text("⛔️Нельзя создавать более 1 активной сделки\n⛔️Завершите старую сделку", reply_markup = start_keyboard)
+        else:       
+            await call.message.edit_text("▫Введите сумму сделки:\n▪пример: 🔸5$ / 🔸$5.23\n◼Важно: вводить без знака '$'")
+            await StateMessage.translation.set()
 
 # окончание состояния
 @dp.callback_query_handler(state=StateMessage.end, text=["endЕransaction"])
 async def call_sss(call: types.CallbackQuery, state: FSMContext):
 
     data = await state.get_data()
-#     subtraction_balance = db.get("SELECT balance FROM users WHERE user_id = ?", (call.from_user.id,))
-#     for subtraction_balance in subtraction_balance:
-#         pass
-#     updated_balance = subtraction_balance - float(data['translation'])
-#     db.change("UPDATE users SET balance = ? WHERE user_id = ?", (updated_balance, call.from_user.id))
     
     await call.message.edit_text(
         f"▫Сумма сделки: {data['translation']}$\n◻NickName получателя: @{data['nickname']}\n⚪Условие сделки: {data['description']}",
         reply_markup = my_purchases_keyboard
     )
     money = data['translation']
+
+# Когда пользователь начинает сделку ему присваивается статус сделки 1
+    db.change("UPDATE users SET transaction_status = ? WHERE user_id = ?", (1, call.from_user.id))
     db.change("UPDATE users SET summ_input = ? WHERE user_id = ?", (money, call.from_user.id,))
+    
     await bot.send_message(data['userid'][0],
                 f"🔔Вам пришел новый запрос на сделку\n▫Cумма сделки: {data['translation']}$\n◻Отправитель: @{call.from_user.username}\n⚪Условие сделки: {data['description']}",
                 reply_markup = InlineKeyboardMarkup(row_width=1).add(
@@ -205,12 +210,15 @@ async def callback_query(call: types.CallbackQuery):
     newsumm = balance - summ
     
     db.change("UPDATE users SET balance = ? WHERE user_id = ?", (newsumm, params[1],))
+    username = db.get("SELECT login FROM users WHERE user_id = ?", (params[1],))
+    for username in username:
+        pass
     
+    await call.message.edit_text(f"В ожидании завершения сделки с пользователем {username}")
     await bot.send_message(params[1],
                 f"\n\n🟩 Пользователь {call.from_user.username} согласился на сделку",
                 reply_markup=InlineKeyboardMarkup(row_width=2).add(
                         InlineKeyboardButton("Завершить сделку", callback_data=f"addbalance_{call.from_user.id}"),
-                        InlineKeyboardButton("Открыть спор", callback_data="nohoh")
                     )
                 )
     
@@ -221,12 +229,15 @@ async def callback_query(call: types.CallbackQuery):
         
     replenishment = db.get("SELECT summ_input FROM users WHERE user_id = ?", (call.from_user.id,))
     user_recipient = db.get("SELECT balance FROM users WHERE user_id = ?", (params[1],))
+    username = db.get("SELECT login FROM users WHERE user_id = ?", (params[1],))
     for replenishment in replenishment:
         pass
     for user_recipient in user_recipient:
         pass
-    await bot.send_message(params[1], f"Сделка состоялась! ваш счет пополнен на {replenishment}$", reply_markup = start_keyboard)
-    await call.message.edit_text(f"Сделка состоялась, с вашего счета списано: {replenishment}$", reply_markup = start_keyboard)
+    for username in username:
+        pass
+    await bot.send_message(params[1], f"Сделка с пользователем: {call.from_user.username} состоялась! ваш счет пополнен на {replenishment}$", reply_markup = start_keyboard)
+    await call.message.edit_text(f"Сделка c пользователем {username} состоялась, с вашего счета списано: {replenishment}$", reply_markup = start_keyboard)
     
     newbalance = user_recipient + replenishment
 
@@ -239,6 +250,7 @@ async def callback_query(call: types.CallbackQuery):
     onenumber_transactions = onenumber_transactions + 1
     twonumber_transactions = twonumber_transactions + 1
     
+    db.change("UPDATE users SET transaction_status = ? WHERE user_id = ?", (0, call.from_user.id,))
     db.change("UPDATE users SET balance = ? WHERE user_id = ?", (newbalance, params[1],))
     db.change("UPDATE users SET summ_input = ? WHERE user_id = ?", (0, call.from_user.id,))
     db.change("UPDATE users SET number_transactions = ? WHERE user_id = ?", (onenumber_transactions, params[1],))
@@ -248,9 +260,17 @@ async def callback_query(call: types.CallbackQuery):
 async def callback_query(call: types.CallbackQuery):
     
      # Получаем передаваемые параметры
-    params = call.data.split("_")   
+    params = call.data.split("_")
+    
+    db.change("UPDATE users SET summ_input = ? WHERE user_id = ?", (0, params[1],))
+    db.change("UPDATE users SET transaction_status = ? WHERE user_id = ?", (0, params[1],))
+    username = db.get("SELECT login FROM users WHERE user_id = ?", (params[1],))
+    for username in username:
+        pass
+    
+    await call.message.edit_text(f"🟥Вы отклонили запрос на сделку с пользователем: {username}", reply_markup = start_keyboard)
     await bot.send_message(params[1], f"\n\n🟥 Пользователь: {call.from_user.username} отклонил сделку",
-                                reply_markup=None
+                                reply_markup=start_keyboard
     )
 
 #   КНОПКИ НАЗАД

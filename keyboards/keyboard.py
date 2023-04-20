@@ -56,6 +56,7 @@ your_referals_keyboard.add(
 guarantee_deal_keyboard = InlineKeyboardMarkup(row_width=2)
 guarantee_deal_keyboard.add(
     InlineKeyboardButton(text="🟢 Создать сделку", callback_data="buyer_button"),
+#     InlineKeyboardButton(text="🟠 Активные сделки", callback_data="activ_buyer_button"),
     InlineKeyboardButton(text="🔴 Вернуться в меню", callback_data="backMenu")
     )
 

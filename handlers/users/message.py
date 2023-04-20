@@ -18,7 +18,7 @@ async def process_start_command(message: types.Message):
         if str(referrer_id) != "":
 #           проверка или человек не перешел по свой ссылке
             if str(referrer_id) != str(message.from_user.id):
-                db.change(f"INSERT INTO users VALUES(NULL, ?, ?, ?, ?, 0, 0, 0)", (message.chat.username, int(time.time()), message.from_user.id, referrer_id,))
+                db.change(f"INSERT INTO users VALUES(NULL, ?, ?, ?, ?, 0, 0, 0, 0)", (message.chat.username, int(time.time()), message.from_user.id, referrer_id,))
                 try:
 #                    отправляем пользователю что по его ссылке перешли
                     await bot.send_message(referrer_id, "💎Поздравляю, у вас плюс 1 реферал💎")
@@ -26,13 +26,13 @@ async def process_start_command(message: types.Message):
                     pass
             else:
 #               если пользователь попытался перейти по своей ссылке не регистрируясь при этом выпадает сообщение и регистрирует его как обычного юзера
-                db.change(f"INSERT INTO users VALUES(NULL, ?, ?, ?, NULL, 0, 0, 0)", (message.chat.username, int(time.time()), message.from_user.id,))
+                db.change(f"INSERT INTO users VALUES(NULL, ?, ?, ?, NULL, 0, 0, 0, 0)", (message.chat.username, int(time.time()), message.from_user.id,))
                 await bot.send_message(message.from_user.id,
                                        "❌⚠️Отклонено. Причина:\nпопытка перехода по обственной ссылке⚠️❌"
                                        )
         else:
 #           если пользователь не переходил по ссылке
-            db.change(f"INSERT INTO users VALUES(NULL, ?, ?, ?, NULL, 0, 0, 0)", (message.chat.username, int(time.time()), message.from_user.id,))
+            db.change(f"INSERT INTO users VALUES(NULL, ?, ?, ?, NULL, 0, 0, 0, 0)", (message.chat.username, int(time.time()), message.from_user.id,))
     await message.answer(
         f"Приветствуем вас в нашем <b>маркете!</b> Выберете пункт меню, необходимый вам!🤑",
         parse_mode="html",
@@ -63,7 +63,7 @@ async def add_username(message: types.Message, state: FSMContext):
     
     user = db.get("SELECT login FROM users WHERE login = ?", (message.text,))
     if not user:
-        await message.answer(f"🚷Пользователь с ником: @{message.text} не зарегистрирован🚷")
+        await message.answer(f"🚷Пользователь с ником: @{message.text} не зарегистрирован🚷\nВозможно пользователь сменил логин\nВведите логин пользователя при регистрации")
     else:
         await state.update_data(nickname=message.text)
         await message.answer(f"◽️Для потверждения NickName: @{message.text}\n🔸Введите NickName повторно")
@@ -90,7 +90,7 @@ async def add_description(message: types.Message, state: FSMContext):
     await message.answer(
         f"📣Отправить запрос на сделку пользователю: @{data['nickname']}?",
         reply_markup = InlineKeyboardMarkup(row_width=2).add(
-            InlineKeyboardButton("🟢Подтвердить сделку", callback_data="endЕransaction"),
+            InlineKeyboardButton("🟢Подтвердить отправку", callback_data="endЕransaction"),
             InlineKeyboardButton("🔴Отменить", callback_data="backMenu_after_deal")
             )
         )
