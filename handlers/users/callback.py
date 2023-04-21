@@ -34,13 +34,15 @@ async def process_support_command(call: types.CallbackQuery):
         reply_markup = support_keyboard
     )
 
-@dp.callback_query_handler(text="add_balance_button")
-async def process_add_balance_command(call: types.CallbackQuery):
+
+# конопочка пополнения
+@dp.callback_query_handler(text="add_balance_button", state=None)
+async def process_add_balance_command(call: types.CallbackQuery, state: FSMContext):
     await call.message.edit_text(
-        '💲 Выберите способ оплаты:',
-        parse_mode="html",
-        reply_markup = add_money_keyboard
+        '💲Введите сумму пополнения:',
+        parse_mode="html"
     )
+    await Payment.currency.set()
     
 @dp.callback_query_handler(text="withdraw_money_button")
 async def process_withdraw_balance_command(call: types.CallbackQuery):
@@ -250,11 +252,8 @@ async def callback_query(call: types.CallbackQuery):
     onenumber_transactions = onenumber_transactions + 1
     twonumber_transactions = twonumber_transactions + 1
     
-    db.change("UPDATE users SET transaction_status = ? WHERE user_id = ?", (0, call.from_user.id,))
-    db.change("UPDATE users SET balance = ? WHERE user_id = ?", (newbalance, params[1],))
-    db.change("UPDATE users SET summ_input = ? WHERE user_id = ?", (0, call.from_user.id,))
-    db.change("UPDATE users SET number_transactions = ? WHERE user_id = ?", (onenumber_transactions, params[1],))
-    db.change("UPDATE users SET number_transactions = ? WHERE user_id = ?", (twonumber_transactions, call.from_user.id,))
+    db.change("UPDATE users SET transaction_status = ?, summ_input = ?, number_transactions = ? WHERE user_id = ?", (0, 0, twonumber_transactions, call.from_user.id,))
+    db.change("UPDATE users SET balance = ?, number_transactions = ? WHERE user_id = ?", (newbalance, onenumber_transactions, params[1],))
     
 @dp.callback_query_handler(filters.Regexp("cencel*"))
 async def callback_query(call: types.CallbackQuery):

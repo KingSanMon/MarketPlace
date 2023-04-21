@@ -14,5 +14,7 @@ class GoodsMarket(StatesGroup):
     price = State()
     end = State()
     
-    
-    
+class Payment(StatesGroup):
+    currency = State()
+    network = State()
+    amount = State()

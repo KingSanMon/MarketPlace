@@ -51,7 +51,7 @@ async def add_translation(message: types.Message, state: FSMContext):
         await message.answer("🟥 Нельзя вводить ничего кроче числа 🟥")
     else:
         if subtraction_balance < float(message.text):
-            await message.answer("На счету не достаточно средств")
+            await message.answer(f"🥲На вашем счету нету такой суммы\nУ вас на счету: {subtraction_balance}$")
         else:
             await state.update_data(translation=message.text)
             await message.answer("◻️Введите NickName пользователя\n◼Важно: вводить nickname без '@'\n🔸Пример ввода: lolzcoder_star")
@@ -132,3 +132,29 @@ async def add_description(message: types.Message, state: FSMContext):
         
         )
     await GoodsMarket.end.set()
+
+# состояние кнопки пополнения
+@dp.message_handler(state=Payment.currency)
+async def add_currency(message: types.Message, state: FSMContext):
+
+    await state.update_data(currency=message.text)
+    await message.answer("Введите код валюты\nПример: USDT, TRC")
+    await Payment.network.set()
+
+@dp.message_handler(state=Payment.network)
+async def add_network(message: types.Message, state: FSMContext):
+
+    await state.update_data(network=message.text)
+    await message.answer("Введите сетевой код блокчейна\nПример: Tron")
+    await Payment.amount.set()
+
+@dp.message_handler(state=Payment.amount)
+async def add_amount(message: types.Message, state: FSMContext):
+
+    await state.update_data(amount=message.text)
+    await message.answer("Для получения ссылки нажмите кнопку ниже",
+        reply_markup = InlineKeyboardMarkup(row_width=True).add(
+            InlineKeyboardButton("Сгенерировать ссылку для пополнения баланса", callback_data="replenishment")
+            )
+        )
+    await state.finish()

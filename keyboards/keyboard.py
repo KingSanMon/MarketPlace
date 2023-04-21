@@ -13,7 +13,7 @@ start_keyboard.add(
         ).add(
         InlineKeyboardButton(text="📑 Создать сделку через гаранта", callback_data="guarantee_deal_button")
         ).add(
-        InlineKeyboardButton(text="👨‍🎓 Поддержка", callback_data="support_button")
+        InlineKeyboardButton(text="👨‍🎓 Поддержка", callback_data="support_button"),
         )
 
 support_keyboard = InlineKeyboardMarkup(row_width=2)

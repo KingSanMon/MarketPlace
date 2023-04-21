@@ -74,3 +74,20 @@ class UserSpam(LifetimeControllerMiddleware):
         if len(self.user_messages_count[user_id]) > self.MAX_MESSAGES_PER_MINUTE:
             await message.answer("Слишком много сообщений. Подождите немного и попробуйте еще раз.")
             raise CancelHandler
+
+class UserUpdateLogin(BaseMiddleware):
+
+    # если пользователь решит поменять логин
+    async def on_process_callback_query(self, call: CallbackQuery, data: dict):
+        try:
+            user_id = call.from_user.id
+            username = call.from_user.username
+            userlogin = db.get("SELECT login FROM users WHERE user_id = ?", (user_id,))
+            for userlogin in userlogin:
+                pass
+            if userlogin != call.from_user.username:
+                db.change("UPDATE users SET login = ? WHERE user_id = ?", (username, user_id,))
+                await call.message.answer('<b>🔥Ваш login был обновлен, вы дальше можете использовать бота</b>')
+        except:
+            pass
+            raise CancelHandler
