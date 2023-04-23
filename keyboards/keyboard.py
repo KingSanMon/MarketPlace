@@ -115,11 +115,16 @@ products.add(
     InlineKeyboardButton(text="Вернуться в меню", callback_data="backMenu")
     )
 
+account_sections = InlineKeyboardMarkup(row_width=2)
+account_sections.add(
+    InlineKeyboardButton(text="Игры", callback_data="games"),
+    InlineKeyboardButton(text="Кошельки", callback_data="wallets"),
+    InlineKeyboardButton(text="Назад", callback_data="accounts_button")
+    )
+
 def genmarkup(data): # передаём в функцию data
 
     markup = InlineKeyboardMarkup() # создаём клавиатуру
-    markup.row_width = 2 # кол-во кнопок в строке
-    for i in data: # цикл для создания кнопок
-        markup.add(InlineKeyboardButton(i[1], callback_data=i[2])) #Создаём кнопки, i[1] - название, i[2] - каллбек дата
+    markup.add(*[InlineKeyboardButton(button[1], callback_data=button[2]) for button in data])
     markup.add(InlineKeyboardButton(text="💢 Назад", callback_data="accounts_button"))
     return markup #возвращаем клавиатуру

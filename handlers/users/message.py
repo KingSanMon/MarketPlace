@@ -63,7 +63,7 @@ async def add_username(message: types.Message, state: FSMContext):
     
     user = db.get("SELECT login FROM users WHERE login = ?", (message.text,))
     if not user:
-        await message.answer(f"🚷Пользователь с ником: @{message.text} не зарегистрирован🚷\nВозможно пользователь сменил логин\nВведите логин пользователя при регистрации")
+        await message.answer(f"🚷Пользователь с ником: @{message.text} не зарегистрирован🚷\n")
     else:
         await state.update_data(nickname=message.text)
         await message.answer(f"◽️Для потверждения NickName: @{message.text}\n🔸Введите NickName повторно")
@@ -108,15 +108,19 @@ async def add_name_goods(message: types.Message, state: FSMContext):
 async def add_description(message: types.Message, state: FSMContext):
     
     await state.update_data(description=message.text)
-    await message.answer("Напишите о себе: ")
+    await message.answer("Введите свой Login по которому можно связаться с вами:\nВажно вводить без знака '@'")
     await GoodsMarket.abouеseller.set()
     
 @dp.message_handler(state=GoodsMarket.abouеseller)
 async def add_description(message: types.Message, state: FSMContext):
     
-    await state.update_data(abouеseller=message.text)
-    await message.answer("Введите цену на товар: ")
-    await GoodsMarket.price.set()
+    user = db.get("SELECT login FROM users WHERE login = ?", (message.text,))
+    if not user:
+        await message.answer(f"🚷Пользователь с ником: @{message.text} не зарегистрирован🚷\n")
+    else:
+        await state.update_data(abouеseller=message.text)
+        await message.answer("Введите цену на товар: ")
+        await GoodsMarket.price.set()
     
 @dp.message_handler(state=GoodsMarket.price)
 async def add_description(message: types.Message, state: FSMContext):
@@ -137,24 +141,86 @@ async def add_description(message: types.Message, state: FSMContext):
 @dp.message_handler(state=Payment.currency)
 async def add_currency(message: types.Message, state: FSMContext):
 
-    await state.update_data(currency=message.text)
-    await message.answer("Введите код валюты\nПример: USDT, TRC")
-    await Payment.network.set()
+    if message.text.replace(".", "", 1).isdigit() == False:
+        await message.answer("🟥 <b>Нельзя вводить ничего кроче числа</b> 🟥")
+    else:
+        await state.update_data(currency=message.text)
+        await message.answer("Введите код валюты\nПример: <b>USDT, TRC</b>")
+        await Payment.network.set()
 
 @dp.message_handler(state=Payment.network)
 async def add_network(message: types.Message, state: FSMContext):
 
-    await state.update_data(network=message.text)
-    await message.answer("Введите сетевой код блокчейна\nПример: Tron")
-    await Payment.amount.set()
+    codmoney = ["USDT", "TRC"]
+    if message.text not in codmoney:
+        await message.answer(f"Нету валюты: <b>{message.text}</b>\nДоступные валюты: <b>USDT, TRC</b>")
+    else:
+        await state.update_data(network=message.text)
+        await message.answer("Введите сетевой код блокчейна\nПример: <b>TRON</b>")
+        await Payment.amount.set()
 
 @dp.message_handler(state=Payment.amount)
 async def add_amount(message: types.Message, state: FSMContext):
 
+    if message.text != "TRON":
+        await message.answer(f"Нету кода: <b>{message.text}</b>\nДоступный код: <b>TRON</b>")
+    else:
+        await state.update_data(amount=message.text)
+        await message.answer("<b>Для получения ссылки нажмите кнопку ниже</b>",
+            reply_markup = InlineKeyboardMarkup(row_width=True).add(
+                InlineKeyboardButton("Сгенерировать ссылку для пополнения баланса", callback_data="replenishment")
+                )
+            )
+        await Payment.end.set()
+
+# кнопка вывода
+@dp.message_handler(state=PaymentСonclusion.currency)
+async def add_currency(message: types.Message, state: FSMContext):
+
+
+    if  message.text.replace(".", "", 1).isdigit() == False:
+        await message.answer("🟥 Нельзя вводить ничего кроче числа 🟥")
+    else:
+        await state.update_data(currency=message.text)
+        await message.answer("Введите код валюты\nПример: USDT")
+        await PaymentСonclusion.network.set()
+
+@dp.message_handler(state=PaymentСonclusion.network)
+async def add_network(message: types.Message, state: FSMContext):
+
+    if message.text != "USDT":
+        await message.answer(f"Нету валюты: {message.text}\nНа данный момент доступны: USDT")
+    else:
+        await state.update_data(network=message.text)
+        await message.answer("Введитe сетевой код блокчейна\nПример: TRON")
+        await PaymentСonclusion.address.set()
+
+@dp.message_handler(state=PaymentСonclusion.address)
+async def add_address(message: types.Message, state: FSMContext):
+
+    if message.text != "TRON":
+        await message.answer(f"Нету кода: {message.text}\nНа данный момент доступны: TRON")
+    else:
+        await state.update_data(address=message.text)
+        await message.answer("Введите адресс кошелька\nПример: TYbseqvK6BEbtZzzDoqZnau5PvtfsLJyRa")
+        await PaymentСonclusion.amount.set()
+
+@dp.message_handler(state=PaymentСonclusion.amount)
+async def add_amount(message: types.Message, state: FSMContext):
+
+    data = await state.get_data()
     await state.update_data(amount=message.text)
-    await message.answer("Для получения ссылки нажмите кнопку ниже",
+    await message.answer("Для подтверждения напишите 'Да'")
+    await PaymentСonclusion.end.set()
+
+@dp.message_handler(state=PaymentСonclusion.end)
+async def end_payment(message: types.Message, state: FSMContext):
+
+    data = await state.get_data()
+    await message.answer(f"Подтвердить операцию на вывод средств?\nЗаполненные данные:\nСумма вывода: {data['currency']}\nКод валюты: {data['network']}\nСетевой код блокчейна: {data['address']}\nАдресс кошелька: {data['amount']}",
         reply_markup = InlineKeyboardMarkup(row_width=True).add(
-            InlineKeyboardButton("Сгенерировать ссылку для пополнения баланса", callback_data="replenishment")
+            InlineKeyboardButton("🟢Подтвердить", callback_data="confirmationwithdrawal"),
+            InlineKeyboardButton("🔴Отменить", callback_data="backMenu")
             )
         )
     await state.finish()

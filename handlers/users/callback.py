@@ -4,6 +4,7 @@ from aiogram.dispatcher import filters
 from keyboards.keyboard import *
 from states.States import *
 from loader import dp, db, bot
+from payment.entering import result_url
 import config as cfg
 import datetime
 
@@ -44,13 +45,13 @@ async def process_add_balance_command(call: types.CallbackQuery, state: FSMConte
     )
     await Payment.currency.set()
     
-@dp.callback_query_handler(text="withdraw_money_button")
+@dp.callback_query_handler(text="withdraw_money_button", state=None)
 async def process_withdraw_balance_command(call: types.CallbackQuery):
     await call.message.edit_text(
-        '💲 Выберите способ вывода:',
-        parse_mode="html",
-        reply_markup = withdraw_money_keyboard
+        '💲Введите сумму вывода:',
+        parse_mode="html"
     )
+    await PaymentСonclusion.currency.set()
     
 @dp.callback_query_handler(text="referal_system_button")
 async def process_referal_command(call: types.CallbackQuery):
@@ -97,8 +98,13 @@ async def process_accounts_command(call: types.CallbackQuery):
 @dp.callback_query_handler(text="accounts")
 async def all_products(call: types.CallbackQuery):
     
-    data = db.get("SELECT * FROM products", (), False)
-    await call.message.edit_text("◽️◼️◽️Список товаров по разделу аккаунты:◽️◼️◽️", reply_markup=genmarkup(data))  
+    await call.message.edit_text("◽️◼️◽️Выберите раздел◽️◼️◽️", reply_markup=account_sections)
+
+@dp.callback_query_handler(text="games")
+async def all_games(call: types.CallbackQuery):
+
+    data = db.get("SELECT * FROM products_games", (), False)
+    await call.message.edit_text("◽️◼️◽️Выберите аккаунт◽️◼️◽️", reply_markup=genmarkup(data))
 
     
 @dp.callback_query_handler(text="manuals_button")
@@ -128,9 +134,9 @@ async def process_add_product_command(call: types.CallbackQuery, state: FSMConte
 async def end_creation(call: types.CallbackQuery, state: FSMContext):
     
     data = await state.get_data()
-    db.change(f"INSERT INTO products VALUES(NULL, ?, ?, ?, ?)", (data['namegoods'], data['description'], data['abouеseller'], data['price'],))
+    db.change(f"INSERT INTO products_games VALUES(NULL, ?, ?, ?, ?, NULL)", (data['namegoods'], data['description'], data['abouеseller'], data['price']))
     await call.message.edit_text(
-        f"Инфорамция о вашем товаре\nНазвание: {data['namegoods']}\nОписание: {data['description']}\nО продавце: {data['abouеseller']}\nЦена: {data['price']}$",
+        f"Инфорамция о вашем товаре\nНазвание: {data['namegoods']}\nОписание: {data['description']}\nСвязаться с продавцом: @{data['abouеseller']}\nЦена: {data['price']}$",
         reply_markup = products
         )
     await state.finish()
@@ -272,6 +278,16 @@ async def callback_query(call: types.CallbackQuery):
                                 reply_markup=start_keyboard
     )
 
+# получение ссылки для пополнения счета
+@dp.callback_query_handler(text=["replenishment"], state=Payment.end)
+async def adding_funds_account(call: types.CallbackQuery, state: FSMContext):
+    data = await state.get_data()
+    await call.message.edit_text(f"Ваша ссылка для пополнения счета: {result_url}",
+        parse_mode="html",
+        # reply_markup = start_keyboard
+    )
+    await state.finish()
+
 #   КНОПКИ НАЗАД
 
 @dp.callback_query_handler(state=StateMessage.end, text=["backMenu_after_deal"]) 
@@ -322,3 +338,12 @@ async def process_backProductlMenu_command(call: types.CallbackQuery):
         parse_mode="html",
         reply_markup = manuals_keyboard
     )
+
+@dp.callback_query_handler(lambda call: True)
+async def stoptopupcall(call: types.CallbackQuery):
+    await bot.answer_callback_query(call.id)
+    userinfo = db.get("SELECT * FROM products_games WHERE description = ?", (call.data,))
+    if userinfo:
+        data = db.get("SELECT * FROM products_games", (), False)
+        await call.message.edit_text(f"ID: {userinfo[0]}\nНазвание: {userinfo[1]}\nОписание: {userinfo[2]}\nПродавец: @{userinfo[3]}\nЦена: {userinfo[4]}$",
+         reply_markup = genmarkup(data))
