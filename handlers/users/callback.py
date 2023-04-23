@@ -4,9 +4,14 @@ from aiogram.dispatcher import filters
 from keyboards.keyboard import *
 from states.States import *
 from loader import dp, db, bot
-from payment.entering import result_url
+from cryptomus import Client
 import config as cfg
 import datetime
+
+PAYMENT_KEY = 'qd38AHmwZu9cIPVUDyfe3DZ2ezvWlkWuy5S2vv2jtoSJB8gC562ZFYfzeSphocBa8KTk3LB47cRTzzrNdb5CIRKbiTWSOy2AMettnI0YYPgI43aViJUnSbA0andEQsq8'
+MERCHANT_UUID = 'e1c2e3c5-9e75-4438-a6f6-746a362d4bf6'
+
+payment = Client.payment(PAYMENT_KEY, MERCHANT_UUID)
 
 @dp.callback_query_handler(text="profile_button")
 async def process_profile_command(call: types.CallbackQuery):
@@ -17,12 +22,12 @@ async def process_profile_command(call: types.CallbackQuery):
     for balance in balance:
         pass
     for x in date_register:
-        date = datetime.datetime.fromtimestamp(x).strftime('%d-%m-%Y')
+        date = datetime.datetime.fromtimestamp(x).strftime('%d.%m.%Y')
     for transactions in transactions:
         pass
     
     await call.message.edit_text(
-        f"👤Информация о пользователе: \n📃Логин пользователя: {call.from_user.username}\n⏳Дата регистрации: {date}\n👑Количество проведенных сделок: {transactions}\n💵Баланс: {balance}$\n⚖Сколько всего выведено в бота: 0$\n⚖Сколько всего введено в бота: 0$",
+        f"👤Информация о пользователе\n----------------------------------------------\n📃Логин пользователя: <code>{call.from_user.username}</code>\n⏳Дата регистрации: <u>{date}</u>\n👑Количество проведенных сделок: {transactions}\n----------------------------------------------\n💵<b>Баланс: <code>{balance}</code>$</b>\n----------------------------------------------\n⚖Сколько всего введено в бота: 0$\n⚖Сколько всего выведено с бота: 0$",
         parse_mode="html",
         reply_markup = profile_keyboard
     )
@@ -30,7 +35,7 @@ async def process_profile_command(call: types.CallbackQuery):
 @dp.callback_query_handler(text="support_button")
 async def process_support_command(call: types.CallbackQuery):
     await call.message.edit_text(
-        f"👤 Контакты нашей поддержки:\n@wolfsblood550 - Главный администратор\n@lolzcoder_star - Директор\nПо всем вопросам обращаться к администратору, по поводу ошибок обращаться к деректору",
+        f"👤 Контакты нашей поддержки:\n@wolfsblood550 - Главный администратор\n@lolzcoder_star - Директор\nПо всем вопросам обращаться к администратору, по поводу ошибок обращаться к директору",
         parse_mode="html",
         reply_markup = support_keyboard
     )
@@ -56,7 +61,7 @@ async def process_withdraw_balance_command(call: types.CallbackQuery):
 @dp.callback_query_handler(text="referal_system_button")
 async def process_referal_command(call: types.CallbackQuery):
     await call.message.edit_text(
-        f"🔗 Ваша реферальная ссылка: https://t.me/{cfg.BOT_NICKNAME}?start={call.from_user.id}",
+        f"🔗 Ваша реферальная ссылка: <code>https://t.me/{cfg.BOT_NICKNAME}?start={call.from_user.id}</code>",
         parse_mode="html",
         reply_markup = referal_system_keyboard
     )
@@ -162,7 +167,7 @@ async def start_deal(call: types.CallbackQuery, state: FSMContext):
     for subtraction_balance in subtraction_balance:
         pass
     if subtraction_balance <= 0:       
-        await call.message.edit_text("Нельзя начать сделку с 0$ на счету\nС перва пополните счет",
+        await call.message.edit_text("💢Нельзя начать сделку с 0$ на счету\n💵Пополните счет",
                                      reply_markup = no_money
                                      )
     else:
@@ -226,7 +231,7 @@ async def callback_query(call: types.CallbackQuery):
     await bot.send_message(params[1],
                 f"\n\n🟩 Пользователь {call.from_user.username} согласился на сделку",
                 reply_markup=InlineKeyboardMarkup(row_width=2).add(
-                        InlineKeyboardButton("Завершить сделку", callback_data=f"addbalance_{call.from_user.id}"),
+                        InlineKeyboardButton("Завершить сделку", callback_data=f"addbalance_{call.from_user.id}")
                     )
                 )
     
@@ -281,12 +286,55 @@ async def callback_query(call: types.CallbackQuery):
 # получение ссылки для пополнения счета
 @dp.callback_query_handler(text=["replenishment"], state=Payment.end)
 async def adding_funds_account(call: types.CallbackQuery, state: FSMContext):
+    number = db.get("SELECT * FROM order_id", (), False)
+    update = number[0][1]
+    update_number = update+1
     data = await state.get_data()
-    await call.message.edit_text(f"Ваша ссылка для пополнения счета: {result_url}",
-        parse_mode="html",
-        # reply_markup = start_keyboard
+    data_payment = {
+    'amount': data['currency'],
+    'currency': data['network'],
+    'network': data['amount'],
+    'order_id': f"{update}",
+    'url_return': 'https://example.com/return',
+    'url_callback': 'https://example.com/callback',
+    'is_payment_multiple': False,
+    'lifetime': '7200',
+    'to_currency': 'USDT'
+    };
+    result = payment.create(data_payment)
+    result_url = result["url"]
+    db.change("UPDATE order_id SET number = ?", (update_number,))
+    await call.message.edit_text(
+        f"Для оплаты перейдите на сайт",
+        reply_markup = InlineKeyboardMarkup(row_width=1).add(
+                       InlineKeyboardButton("Перейти для пополения", url=f"{result_url}"),
+                       InlineKeyboardButton("Проверить оплату", callback_data=f"{update}_ch_{data['currency']}")
+                    )
     )
     await state.finish()
+
+@dp.callback_query_handler(filters.Regexp("ch"))
+async def callback_query(call: types.CallbackQuery):
+#     # Проверка платежа
+    params = call.data.split("_")
+    data = {
+        "uuid": "a7c0caec-a594-4aaa-b1c4-77d511857594",
+        "order_id": f"{params[0]}"
+    }
+
+    result_p = payment.info(data)
+    if result_p["payment_status"] == 'check':
+        await bot.send_message(call.from_user.id,
+        f"✅ Платеж прошел успешно, ваш баланс пополнен на: {params[2]}$",
+        reply_markup = my_purchases_keyboard
+        )
+        balance = db.get("SELECT balance FROM users WHERE user_id = ?", (call.from_user.id,))
+        for i in balance:
+            pass
+        balance = i + float(params[2])
+        db.change("UPDATE users SET balance = ? WHERE user_id = ?", (balance, call.from_user.id))
+    else:
+        await bot.send_message(call.from_user.id, "♻️ Ожидание платежа")
 
 #   КНОПКИ НАЗАД
 
