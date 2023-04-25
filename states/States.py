@@ -7,13 +7,6 @@ class StateMessage(StatesGroup):
     description = State()
     end = State()
     
-class GoodsMarket(StatesGroup):
-    namegoods = State()
-    description = State()
-    abouеseller = State()
-    price = State()
-    end = State()
-    
 class Payment(StatesGroup):
     currency = State()
     network = State()
@@ -26,3 +19,10 @@ class PaymentСonclusion(StatesGroup):
     address = State()
     amount = State()
     end = State()
+
+class AddNewGame(StatesGroup):
+    photo = State()
+    namegame = State()
+    cengame = State()
+    loginaccount = State()
+    password = State()

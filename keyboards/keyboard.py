@@ -16,6 +16,17 @@ start_keyboard.add(
         InlineKeyboardButton(text="👨‍🎓 Поддержка", callback_data="support_button"),
         )
 
+add_balance = InlineKeyboardMarkup(row_width=2)
+add_balance.add(
+    InlineKeyboardButton(text="💵Пополнить", callback_data="add_balance_users"),
+    InlineKeyboardButton(text="💢Вернутся в меню", callback_data="backMenu")
+    )
+
+suppurt = InlineKeyboardMarkup(row_width=1)
+suppurt.add(
+    InlineKeyboardButton(text="👨‍🎓 Поддержка", callback_data="support_button")
+    )
+
 support_keyboard = InlineKeyboardMarkup(row_width=2)
 support_keyboard.add(
     InlineKeyboardButton(text="💢 Назад", callback_data="backMenu")
@@ -23,22 +34,6 @@ support_keyboard.add(
 
 profile_keyboard = InlineKeyboardMarkup(row_width=2)
 profile_keyboard.add(
-    InlineKeyboardButton(text="💢 Назад", callback_data="backMenu")
-    )
-
-add_money_keyboard = InlineKeyboardMarkup(row_width=2)
-add_money_keyboard.add(
-    InlineKeyboardButton(text="₿ BTC", callback_data="add_btc_but"),
-    InlineKeyboardButton(text="Ξ ETH", callback_data="add_eth_but"),
-    InlineKeyboardButton(text="💲 USDT", callback_data="add_usdt_but"),
-    InlineKeyboardButton(text="💢 Назад", callback_data="backMenu")
-    )
-
-withdraw_money_keyboard = InlineKeyboardMarkup(row_width=2)
-withdraw_money_keyboard.add(
-    InlineKeyboardButton(text="₿ BTC", callback_data="add_btc_but"),
-    InlineKeyboardButton(text="Ξ ETH", callback_data="add_eth_but"),
-    InlineKeyboardButton(text="💲 USDT", callback_data="add_usdt_but"),
     InlineKeyboardButton(text="💢 Назад", callback_data="backMenu")
     )
 
@@ -60,24 +55,11 @@ guarantee_deal_keyboard.add(
     InlineKeyboardButton(text="🔴 Вернуться в меню", callback_data="backMenu")
     )
 
-buyer_keyboard = InlineKeyboardMarkup(row_width=2)
-buyer_keyboard.add(
-    InlineKeyboardButton(text="💢 Назад", callback_data="backGuaranteeMenu")
-    )
-
-seller_keyboard = InlineKeyboardMarkup(row_width=2)
-seller_keyboard.add(
-    InlineKeyboardButton(text="💢 Назад", callback_data="backGuaranteeMenu")
-    )
-
 my_purchases_keyboard = InlineKeyboardMarkup(row_width=2)
 my_purchases_keyboard.add(
     InlineKeyboardButton(text="💢 Назад", callback_data="backMenu")
     )
-return_menu = InlineKeyboardMarkup(row_width=2)
-return_menu.add(
-    InlineKeyboardButton(text="💢 Вернутся в главное меню", callback_data="backMenu_after_deal")
-    )
+
 
 market_keyboard = InlineKeyboardMarkup(row_width=2)
 market_keyboard.add(
@@ -88,43 +70,42 @@ market_keyboard.add(
 
 accounts_keyboard = InlineKeyboardMarkup(row_width=2)
 accounts_keyboard.add(
-    InlineKeyboardButton(text="📦 Выставить свой товар", callback_data="add_your_product_button"),
+    InlineKeyboardButton(text="📦 Мои аккаунты", callback_data="useraccounts"),
     InlineKeyboardButton(text="📝 Перейти к товарам", callback_data="accounts"),
     InlineKeyboardButton(text="💢 Назад", callback_data="backMarketMenu")
     )
 
-manuals_keyboard = InlineKeyboardMarkup(row_width=2)
-manuals_keyboard.add(
-    InlineKeyboardButton(text="📦 Выставить свой товар", callback_data="add_your_product_button"),
-    InlineKeyboardButton(text="💢 Назад", callback_data="backMarketMenu")
+new_accounts = InlineKeyboardMarkup(row_width=2)
+new_accounts.add(
+    InlineKeyboardButton(text="❇️Добавить аккаунт", callback_data="add_new"),
+    InlineKeyboardButton(text="💢Назад", callback_data="accounts_button")
     )
 
-add_your_product_keyboard = InlineKeyboardMarkup(row_width=2)
-add_your_product_keyboard.add(
-    InlineKeyboardButton(text="💢 Назад", callback_data="backProductMenu")
+back_add_new = InlineKeyboardMarkup(row_width=2)
+back_add_new.add(
+    InlineKeyboardButton(text="🎮Игры", callback_data="add_new_accounts_game"),
+    InlineKeyboardButton(text="☎️Стим", callback_data="add_new_accounts_steam")
+    ).add(
+    InlineKeyboardButton(text="💢Назад", callback_data="useraccounts")
     )
+
 no_money = InlineKeyboardMarkup(row_width=2)
 no_money.add(
     InlineKeyboardButton(text="💢Вернутся в меню", callback_data="backMenu"),
     InlineKeyboardButton(text="💵Пополнить", callback_data="add_balance_button")
     )
 
-products = InlineKeyboardMarkup(row_width=1)
-products.add(
-    InlineKeyboardButton(text="Вернутся к просмотру товаров", callback_data="accounts_button"),
-    InlineKeyboardButton(text="Вернуться в меню", callback_data="backMenu")
-    )
-
 account_sections = InlineKeyboardMarkup(row_width=2)
 account_sections.add(
-    InlineKeyboardButton(text="Игры", callback_data="games"),
-    InlineKeyboardButton(text="Кошельки", callback_data="wallets"),
-    InlineKeyboardButton(text="Назад", callback_data="accounts_button")
+    InlineKeyboardButton(text="🎮Игры", callback_data="games"),
+    InlineKeyboardButton(text="☎️Стим", callback_data="wallets"),
+    InlineKeyboardButton(text="💢Назад", callback_data="accounts_button")
     )
 
-def genmarkup(data): # передаём в функцию data
 
-    markup = InlineKeyboardMarkup() # создаём клавиатуру
-    markup.add(*[InlineKeyboardButton(button[1], callback_data=button[1]) for button in data])
-    markup.add(InlineKeyboardButton(text="💢 Назад", callback_data="accounts_button"))
-    return markup #возвращаем клавиатуру
+# def genmarkup(data): # передаём в функцию data
+
+#     markup = InlineKeyboardMarkup() # создаём клавиатуру
+#     markup.add(*[InlineKeyboardButton(button[1], callback_data=button[1]) for button in data])
+#     markup.add(InlineKeyboardButton(text="💢 Назад", callback_data="accounts_button"))
+#     return markup #возвращаем клавиатуру

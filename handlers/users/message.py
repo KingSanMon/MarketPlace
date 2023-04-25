@@ -4,6 +4,7 @@ from aiogram.dispatcher import FSMContext
 from keyboards.keyboard import *
 from states.States import *
 import time
+from aiogram.dispatcher.filters import Text
 
 # @dp.message_handler(commands=["start"], state="*", chat_type=["private"])
 # async def start(message: types.Message, state: FSMContext):
@@ -18,7 +19,7 @@ async def process_start_command(message: types.Message):
         if str(referrer_id) != "":
 #           проверка или человек не перешел по свой ссылке
             if str(referrer_id) != str(message.from_user.id):
-                db.change(f"INSERT INTO users VALUES(NULL, ?, ?, ?, ?, 0, 0, 0, 0)", (message.chat.username, int(time.time()), message.from_user.id, referrer_id,))
+                db.change(f"INSERT INTO users VALUES(NULL, ?, ?, ?, ?, 0, 0, 0, 0, 0)", (message.chat.username, int(time.time()), message.from_user.id, referrer_id,))
                 try:
 #                    отправляем пользователю что по его ссылке перешли
                     await bot.send_message(referrer_id, "💎Поздравляю, у вас плюс 1 реферал💎")
@@ -26,18 +27,28 @@ async def process_start_command(message: types.Message):
                     pass
             else:
 #               если пользователь попытался перейти по своей ссылке не регистрируясь при этом выпадает сообщение и регистрирует его как обычного юзера
-                db.change(f"INSERT INTO users VALUES(NULL, ?, ?, ?, NULL, 0, 0, 0, 0)", (message.chat.username, int(time.time()), message.from_user.id,))
+                db.change(f"INSERT INTO users VALUES(NULL, ?, ?, ?, NULL, 0, 0, 0, 0, 0)", (message.chat.username, int(time.time()), message.from_user.id,))
                 await bot.send_message(message.from_user.id,
                                        "❌⚠️Отклонено. Причина:\nпопытка перехода по обственной ссылке⚠️❌"
                                        )
         else:
 #           если пользователь не переходил по ссылке
-            db.change(f"INSERT INTO users VALUES(NULL, ?, ?, ?, NULL, 0, 0, 0, 0)", (message.chat.username, int(time.time()), message.from_user.id,))
+            db.change(f"INSERT INTO users VALUES(NULL, ?, ?, ?, NULL, 0, 0, 0, 0, 0)", (message.chat.username, int(time.time()), message.from_user.id,))
     await message.answer(
         f"Приветствуем вас в нашем <b>маркете!</b> Выберете пункт меню, необходимый вам!🤑",
         parse_mode="html",
         reply_markup = start_keyboard
     )
+
+# выход из состояний
+@dp.message_handler(state="*", commands='отмена')
+@dp.message_handler(Text(equals='отмена', ignore_case=True), state="*")
+async def cancel_handler(message: types.Message, state: FSMContext):
+    current_state = await state.get_state()
+    if current_state is None:
+        return
+    await state.finish()
+    await message.reply('✅Успешно отменили', reply_markup=start_keyboard)
 
 # записываем цену которую ввели
 @dp.message_handler(state=StateMessage.translation)
@@ -86,67 +97,34 @@ async def add_user_id(message: types.Message, state: FSMContext):
 async def add_description(message: types.Message, state: FSMContext):
     
     data = await state.get_data()
-    await state.update_data(description=message.text)
-    await message.answer(
-        f"📣Отправить запрос на сделку пользователю: @{data['nickname']}?",
-        reply_markup = InlineKeyboardMarkup(row_width=2).add(
-            InlineKeyboardButton("🟢Подтвердить отправку", callback_data="endЕransaction"),
-            InlineKeyboardButton("🔴Отменить", callback_data="backMenu_after_deal")
-            )
-        )
-    await StateMessage.end.set()
- 
-# Добавление товара на рынок
-@dp.message_handler(state=GoodsMarket.namegoods)
-async def add_name_goods(message: types.Message, state: FSMContext):
-    
-    await state.update_data(namegoods=message.text)
-    await message.answer("Введите описание товара: ")
-    await GoodsMarket.description.set()
-    
-@dp.message_handler(state=GoodsMarket.description)
-async def add_description(message: types.Message, state: FSMContext):
-    
-    await state.update_data(description=message.text)
-    await message.answer("Введите свой Login по которому можно связаться с вами:\nВажно вводить без знака '@'")
-    await GoodsMarket.abouеseller.set()
-    
-@dp.message_handler(state=GoodsMarket.abouеseller)
-async def add_description(message: types.Message, state: FSMContext):
-    
-    user = db.get("SELECT login FROM users WHERE login = ?", (message.text,))
-    if not user:
-        await message.answer(f"🚷Пользователь с ником: @{message.text} не зарегистрирован🚷\n")
+    if len(message.text) > 100:
+            await message.answer("🟥Нельзя вводить более 100 символов🟥")
     else:
-        await state.update_data(abouеseller=message.text)
-        await message.answer("Введите цену на товар: ")
-        await GoodsMarket.price.set()
-    
-@dp.message_handler(state=GoodsMarket.price)
-async def add_description(message: types.Message, state: FSMContext):
-    
-    data = await state.get_data()
-    await state.update_data(price=message.text)
-    await message.answer(
-        f"Выставить товар на рынок?",
-        reply_markup = InlineKeyboardMarkup(row_width=2).add(
-            InlineKeyboardButton("🟢Выставить товар", callback_data="display_product"),
-            InlineKeyboardButton("🔴Отменить", callback_data="cancel_product")
+        await state.update_data(description=message.text)
+        await message.answer(
+            f"📣Отправить запрос на сделку пользователю: @{data['nickname']}?",
+            reply_markup = InlineKeyboardMarkup(row_width=2).add(
+                InlineKeyboardButton("🟢Подтвердить отправку", callback_data="endЕransaction"),
+                InlineKeyboardButton("🔴Отменить", callback_data="backMenu_after_deal")
+                )
             )
-        
-        )
-    await GoodsMarket.end.set()
+        await StateMessage.end.set()
+
 
 # состояние кнопки пополнения
 @dp.message_handler(state=Payment.currency)
 async def add_currency(message: types.Message, state: FSMContext):
 
-    if message.text.replace(".", "", 1).isdigit() == False:
+    summ = message.text
+    if summ.replace(".", "", 1).isdigit() == False:
         await message.answer("🟥 <b>Нельзя вводить ничего кроче числа</b> 🟥")
     else:
-        await state.update_data(currency=message.text)
-        await message.answer("Введите код валюты\nПример: <b>USDT, TRC</b>")
-        await Payment.network.set()
+        if float(summ) > 100000:
+            await message.answer("Нельзя вводить сумму больше 100000")
+        else:
+            await state.update_data(currency=message.text)
+            await message.answer("Введите код валюты\nПример: <b>USDT, TRC</b>")
+            await Payment.network.set()
 
 @dp.message_handler(state=Payment.network)
 async def add_network(message: types.Message, state: FSMContext):
@@ -208,19 +186,43 @@ async def add_address(message: types.Message, state: FSMContext):
 @dp.message_handler(state=PaymentСonclusion.amount)
 async def add_amount(message: types.Message, state: FSMContext):
 
-    data = await state.get_data()
     await state.update_data(amount=message.text)
-    await message.answer("Для подтверждения напишите 'Да'")
-    await PaymentСonclusion.end.set()
-
-@dp.message_handler(state=PaymentСonclusion.end)
-async def end_payment(message: types.Message, state: FSMContext):
-
-    data = await state.get_data()
-    await message.answer(f"Подтвердить операцию на вывод средств?\nЗаполненные данные:\nСумма вывода: {data['currency']}\nКод валюты: {data['network']}\nСетевой код блокчейна: {data['address']}\nАдресс кошелька: {data['amount']}",
+    await message.answer(
+        "Для подтверждения операции нажмите Перейти к выводу",
         reply_markup = InlineKeyboardMarkup(row_width=True).add(
-            InlineKeyboardButton("🟢Подтвердить", callback_data="confirmationwithdrawal"),
-            InlineKeyboardButton("🔴Отменить", callback_data="backMenu")
+            InlineKeyboardButton("🟢Перейти к выводу", callback_data="confirmationwithdrawal"),
             )
         )
+    await PaymentСonclusion.end.set()
+
+@dp.message_handler(content_types=['photo'], state=AddNewGame.photo)
+async def load_photo(message: types.Message, state: FSMContext):
+    await state.update_data(photo=message.photo[0].file_id)
+    await AddNewGame.namegame.set()
+    await message.reply("Введите название игры")
+
+@dp.message_handler(state=AddNewGame.namegame)
+async def load_namegame(message: types.Message, state: FSMContext):
+    await state.update_data(namegame=message.text)
+    await AddNewGame.cengame.set()
+    await message.reply("Укажите цену за аккаунт")
+
+@dp.message_handler(state=AddNewGame.cengame)
+async def load_cengame(message: types.Message, state: FSMContext):
+    await state.update_data(cengame=message.text)
+    await AddNewGame.loginaccount.set()
+    await message.reply("Введите логин от аккаунта\nПользователь увидит его только после того как купит")
+
+@dp.message_handler(state=AddNewGame.loginaccount)
+async def load_login(message: types.Message, state: FSMContext):
+    await state.update_data(loginaccount=message.text)
+    await AddNewGame.password.set()
+    await message.reply("Введите пароль от аккаунта\nПользователь увидит его только после того как купит")
+
+@dp.message_handler(state=AddNewGame.password)
+async def add_password(message: types.Message, state: FSMContext):
+    await state.update_data(password=message.text)
+    data = await state.get_data()
+    db.change("INSERT INTO games VALUES(NULL, ?, ?, ?, ?, ?)", (data['photo'], data['namegame'], data['password'], data['loginaccount'], data['password']))
+    await message.answer("Аккаунт успешно выставлен на рынок", reply_markup=start_keyboard)
     await state.finish()
