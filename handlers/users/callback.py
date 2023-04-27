@@ -43,7 +43,7 @@ async def process_support_command(call: types.CallbackQuery):
 @dp.callback_query_handler(text="add_balance_button")
 async def process_withdraw_balance_command(call: types.CallbackQuery):
     await call.message.edit_text(
-        '💳 <i>Пополнение баланса</i>\n<b>⚠️Что бы перейти к пополнению баланса</b>\n<b>⚠️Нажмите пополнить</b>',
+        '💳 <i>Пополнение баланса</i>\n❓<u><b>Что бы отменить ввод, напишите "отмена"</b></u>\n<b>⚠️Что бы перейти к пополнению баланса</b>\n<b>⚠️Нажмите пополнить</b>',
         parse_mode="html",
         reply_markup = add_balance
     )
@@ -56,7 +56,15 @@ async def process_add_balance_command(call: types.CallbackQuery, state: FSMConte
     )
     await Payment.currency.set()
 
-@dp.callback_query_handler(text="ad", state=None)
+@dp.callback_query_handler(text="withdraw_money_button")
+async def process_withdraw_balance_command(call: types.CallbackQuery):
+    await call.message.edit_text(
+        '💳 <i>Вывод средств</i>\n❓<u><b>Что бы отменить ввод, напишите "отмена"</b></u>\n<b>⚠️Что бы перейти к выводу средств</b>\n<b>⚠️Нажмите вывести</b>',
+        parse_mode="html",
+        reply_markup = autput_balance
+    )
+
+@dp.callback_query_handler(text="autput_balance_users", state=None)
 async def process_withdraw_balance_command(call: types.CallbackQuery):
     await call.message.edit_text(
         '💲Введите сумму вывода:',
@@ -75,6 +83,14 @@ async def process_referal_command(call: types.CallbackQuery):
 @dp.callback_query_handler(text="guarantee_deal_button")
 async def process_guarntee_command(call: types.CallbackQuery):
     await call.message.edit_text(
+        '▪ Создать сделку с пользователем ▫\n🔸Важно: Следуйте инструкции для предотвращения нежелательных ошибок',
+        parse_mode="html",
+        reply_markup = guarantee_deal_keyboard
+    )
+
+@dp.callback_query_handler(text="guarantee_deal_button1")
+async def process_guarntee_command(call: types.CallbackQuery):
+    await call.message.answer(
         '▪ Создать сделку с пользователем ▫\n🔸Важно: Следуйте инструкции для предотвращения нежелательных ошибок',
         parse_mode="html",
         reply_markup = guarantee_deal_keyboard
@@ -106,14 +122,39 @@ async def process_accounts_command(call: types.CallbackQuery):
          reply_markup = accounts_keyboard
      )
 
+@dp.callback_query_handler(text="test1")
+async def steam(call: types.CallbackQuery):
+    await call.answer("🫠Пока что в доработке🫠", show_alert=True)
+
+@dp.callback_query_handler(text="wallets")
+async def steam(call: types.CallbackQuery):
+    await call.answer("⚠️Этот раздел в доработке⚠️", show_alert=True)
+    
+@dp.callback_query_handler(text="manuals_button")
+async def process_manuals_command(call: types.CallbackQuery):
+    await call.answer("⚠️Пока что в доработке⚠️", show_alert=True)
+
 # информация об аккауетах
 @dp.callback_query_handler(text="useraccounts")
 async def add_product(call: types.CallbackQuery):
-
     await call.message.edit_text(
-        f"💮Информация о ваших аккаунтах💮",
+        f"🔮Для того что бы отменить ввод информации просто введите 'отмена'",
         reply_markup=new_accounts
         )
+
+# Информация об аккаунтах пользователя
+@dp.callback_query_handler(text="my_accounts")
+async def buy(call: types.CallbackQuery):
+    data = db.get("SELECT * FROM games WHERE user_id = ?", (call.from_user.id,), False)
+    await call.message.edit_text('Список ваших аккаунтов:', reply_markup=myaccount(data))
+# Удаление аккаунта с рынка
+# @dp.callback_query_handler(text="delete")
+# async def delete_my_accounts(call: types.CallbackQuery):
+#     userinfo = db.get("SELECT * FROM games WHERE user_id = ?", (call.from_user.id,))
+#     await bot.send_photo(call.from_user.id, userinfo[1],
+#     f"Название: {userinfo[2]}\nЦена: {userinfo[3]}\nЛогин: {userinfo[4]}\nПароль: {userinfo[5]}",
+#     reply_markup=delete_accounts
+#     )
 
 # добавление нового аккаунта
 @dp.callback_query_handler(text="add_new")
@@ -130,34 +171,19 @@ async def add_new_accounts(call: types.CallbackQuery):
     await AddNewGame.photo.set()
     await call.message.reply("Загрузите фотографию аккаунта")
 
+@dp.callback_query_handler(text="add_new_accounts_steam")
+async def add_new_accounts(call: types.CallbackQuery):
+    await call.answer("Бл это тоже еще надо доделать 🤯🔫", show_alert=True)
+
 
 @dp.callback_query_handler(text="accounts")
 async def all_products(call: types.CallbackQuery):
-    
     await call.message.edit_text("◽️◼️◽️Выберите раздел◽️◼️◽️", reply_markup=account_sections)
 
 @dp.callback_query_handler(text="games")
-async def all_games(call: types.CallbackQuery):
-    for reg in db.get("SELECT * FROM games", (), False):
-        await bot.send_photo(
-            call.from_user.id, reg[1],
-            f"Название игры: {reg[2]}\nСтоимость аккаунта: {reg[3]}",
-            reply_markup=InlineKeyboardMarkup(row_width=2).add(
-                InlineKeyboardButton(text="Купить аккаунт", callback_data="test1")
-                )
-            )
-
-@dp.callback_query_handler(text="test1")
-async def steam(call: types.CallbackQuery):
-    await call.answer("🫠Пока что в доработке🫠", show_alert=True)
-
-@dp.callback_query_handler(text="wallets")
-async def steam(call: types.CallbackQuery):
-    await call.answer("⚠️Этот раздел в доработке⚠️", show_alert=True)
-    
-@dp.callback_query_handler(text="manuals_button")
-async def process_manuals_command(call: types.CallbackQuery):
-    await call.answer("⚠️Пока что в доработке⚠️", show_alert=True)
+async def buy(call: types.CallbackQuery):
+    data = db.get("SELECT * FROM games", (), False)
+    await call.message.edit_text('Список всех имеющихся аккаунтов:', reply_markup=genmarkup(data))
     
     
 #Кнопки реферальной системы
@@ -297,8 +323,38 @@ async def callback_query(call: types.CallbackQuery):
                                 reply_markup=start_keyboard
     )
 
+@dp.callback_query_handler(text="USDT", state=Payment.network)
+async def add_network(call: types.CallbackQuery, state: FSMContext):
+    await state.update_data(network="USDT")
+    await call.message.edit_text("Выберите код блокчейна",
+        reply_markup=InlineKeyboardMarkup(row_width=1).add(
+            InlineKeyboardButton(text="TRON", callback_data="TRON")
+            )
+        )
+    await Payment.amount.set()
+
+@dp.callback_query_handler(text="TRX", state=Payment.network)
+async def add_network(call: types.CallbackQuery, state: FSMContext):
+    await state.update_data(network="TRX")
+    await call.message.edit_text("Выберите код блокчейна",
+        reply_markup=InlineKeyboardMarkup(row_width=1).add(
+            InlineKeyboardButton(text="TRON", callback_data="TRON")
+            )
+        )
+    await Payment.amount.set()
+
+@dp.callback_query_handler(text="TRON", state=Payment.amount)
+async def add_amount(call: types.CallbackQuery, state: FSMContext):
+    await state.update_data(amount="TRON")
+    await call.message.edit_text("Сгенерируйте ссылку",
+        reply_markup=InlineKeyboardMarkup(row_width=True).add(
+            InlineKeyboardButton(text="Сгенерировать ссылку", callback_data="replenishment")
+            )
+        )
+    await Payment.end.set()
+
 # получение ссылки для пополнения счета
-@dp.callback_query_handler(text=["replenishment"], state=Payment.end)
+@dp.callback_query_handler(text="replenishment", state=Payment.end)
 async def adding_funds_account(call: types.CallbackQuery, state: FSMContext):
     number = db.get("SELECT * FROM order_id", (), False)
     update = number[0][1]
@@ -342,12 +398,21 @@ async def callback_query(call: types.CallbackQuery):
         await call.message.edit_text(f"✅ Платеж прошел успешно, ваш баланс пополнен на: {params[2]}$",
         reply_markup = my_purchases_keyboard
         )
-        total_received_balance = db.get("SELECT balance, total_received, referrer_id FROM users WHERE user_id = ?", (call.from_user.id,))
+        total_received_balance = db.get("SELECT balance, total_received, referrer_id, number_deposits FROM users WHERE user_id = ?", (call.from_user.id,))
         if total_received_balance[2] != None:
-            referrer = db.get("SELECT balance FROM users WHERE user_id = ?", (total_received_balance[2],))
-            balance_referrer = float(params[2]) * 0.05
-            new_referrer = float(referrer[0]) + balance_referrer
-            db.change("UPDATE users SET balance = ? WHERE user_id = ?", (new_referrer, total_received_balance[2]))
+            if total_received_balance[3] == 0:
+                referrer = db.get("SELECT balance FROM users WHERE user_id = ?", (total_received_balance[2],))
+                balance_referrer = float(params[2]) * 0.05
+                new_referrer = float(referrer[0]) + balance_referrer
+                number_deposits = total_received_balance[3] + 1
+                total_received = total_received_balance[1] + float(params[2])
+                balance = total_received_balance[0] + float(params[2])
+                db.change("UPDATE users SET balance = ?, total_received = ?, number_deposits = ? WHERE user_id = ?", (balance, total_received, number_deposits, call.from_user.id))
+                db.change("UPDATE users SET balance = ? WHERE user_id = ?", (new_referrer, total_received_balance[2]))
+            else:
+                total_received = total_received_balance[1] + float(params[2])
+                balance = total_received_balance[0] + float(params[2])
+                db.change("UPDATE users SET balance = ?, total_received = ? WHERE user_id = ?", (balance, total_received, call.from_user.id))
         else:
             total_received = total_received_balance[1] + float(params[2])
             balance = total_received_balance[0] + float(params[2])
@@ -417,4 +482,30 @@ async def process_backMarketMenu_command(call: types.CallbackQuery):
         '📰 Выберите тематику',
         parse_mode="html",
         reply_markup = market_keyboard
-    )   
+    )
+
+# покупка товара
+@dp.callback_query_handler(text="buy")
+async def process_guarntee_command(call: types.CallbackQuery):
+    await call.message.edit_caption("Вы точно желаете купить данный товар?", reply_markup=buy_accounts_confirmation)
+
+@dp.callback_query_handler(text="yes")
+async def buy_procces(call: types.CallbackQuery):
+    await call.message.edit_caption("Товар успешно приобретен")
+    await call.message.answer("Пароль от аккаунта: \nЛогин от аккаунта: ")
+
+# при выболе калбека будет что то происходить
+@dp.callback_query_handler(lambda call: True)
+async def inform(call: types.CallbackQuery):
+    userinfo = db.get("SELECT * FROM games WHERE id = ?", (call.data,))
+    if userinfo[6] == call.from_user.id:
+        await bot.send_photo(
+        call.from_user.id, userinfo[1],
+        f"🎮 Название: <b>{userinfo[2]}</b>\n---------------------------------------\n💰 Цена: <b>{userinfo[3]}</b>$\n---------------------------------------\n👤 Продавец: <b>@{userinfo[7]}</b>",
+        parse_mode="html")
+    else:
+        await bot.send_photo(
+        call.from_user.id, userinfo[1],
+        f"🎮 Название: <b>{userinfo[2]}</b>\n---------------------------------------\n💰 Цена: <b>{userinfo[3]}</b>$\n---------------------------------------\n👤 Продавец: <b>@{userinfo[7]}</b>",
+        parse_mode="html",
+        reply_markup=buy_accounts)

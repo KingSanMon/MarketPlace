@@ -22,6 +22,13 @@ add_balance.add(
     InlineKeyboardButton(text="💢Вернутся в меню", callback_data="backMenu")
     )
 
+autput_balance = InlineKeyboardMarkup(row_width=2)
+autput_balance.add(
+    InlineKeyboardButton(text="💵Вывести", callback_data="autput_balance_users"),
+    InlineKeyboardButton(text="💢Вернутся в меню", callback_data="backMenu")
+    )
+
+
 suppurt = InlineKeyboardMarkup(row_width=1)
 suppurt.add(
     InlineKeyboardButton(text="👨‍🎓 Поддержка", callback_data="support_button")
@@ -78,6 +85,7 @@ accounts_keyboard.add(
 new_accounts = InlineKeyboardMarkup(row_width=2)
 new_accounts.add(
     InlineKeyboardButton(text="❇️Добавить аккаунт", callback_data="add_new"),
+    InlineKeyboardButton(text="🛄Мои аккаунты", callback_data="my_accounts"),
     InlineKeyboardButton(text="💢Назад", callback_data="accounts_button")
     )
 
@@ -87,6 +95,12 @@ back_add_new.add(
     InlineKeyboardButton(text="☎️Стим", callback_data="add_new_accounts_steam")
     ).add(
     InlineKeyboardButton(text="💢Назад", callback_data="useraccounts")
+    )
+
+buy_accounts = InlineKeyboardMarkup(row_width=1)
+buy_accounts.add(
+    InlineKeyboardButton(text="🛒 Купить", callback_data="buy"),
+    InlineKeyboardButton(text="📑 Создать сделку через гаранта", callback_data="guarantee_deal_button1")
     )
 
 no_money = InlineKeyboardMarkup(row_width=2)
@@ -102,10 +116,31 @@ account_sections.add(
     InlineKeyboardButton(text="💢Назад", callback_data="accounts_button")
     )
 
+buy_accounts_confirmation = InlineKeyboardMarkup(row_width=2)
+buy_accounts_confirmation.add(
+    InlineKeyboardButton(text="Подтвердить", callback_data="yes"),
+    InlineKeyboardButton(text="Отказать", callback_data="no")
+    )
 
-# def genmarkup(data): # передаём в функцию data
+delete_accounts = InlineKeyboardMarkup(row_width=1)
+delete_accounts.add(
+    InlineKeyboardButton(text="Удалить аккаунт", callback_data="delete")
+    )
 
-#     markup = InlineKeyboardMarkup() # создаём клавиатуру
-#     markup.add(*[InlineKeyboardButton(button[1], callback_data=button[1]) for button in data])
-#     markup.add(InlineKeyboardButton(text="💢 Назад", callback_data="accounts_button"))
-#     return markup #возвращаем клавиатуру
+def genmarkup(data): # передаём в функцию data
+
+    markup = InlineKeyboardMarkup() # создаём клавиатуру
+    markup.add(*[InlineKeyboardButton(button[2], callback_data=button[0]) for button in data])
+    markup.add(
+        InlineKeyboardButton(text="💢 Назад", callback_data="accounts")
+        )
+    return markup #возвращаем клавиатуру
+
+def myaccount(data): # передаём в функцию data
+
+    markup = InlineKeyboardMarkup() # создаём клавиатуру
+    markup.add(*[InlineKeyboardButton(button[2], callback_data=button[0]) for button in data])
+    markup.add(
+        InlineKeyboardButton(text="💢 Назад", callback_data="useraccounts")
+        )
+    return markup #возвращаем клавиатуру

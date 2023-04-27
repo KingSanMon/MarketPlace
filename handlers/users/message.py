@@ -19,7 +19,7 @@ async def process_start_command(message: types.Message):
         if str(referrer_id) != "":
 #           проверка или человек не перешел по свой ссылке
             if str(referrer_id) != str(message.from_user.id):
-                db.change(f"INSERT INTO users VALUES(NULL, ?, ?, ?, ?, 0, 0, 0, 0, 0)", (message.chat.username, int(time.time()), message.from_user.id, referrer_id,))
+                db.change(f"INSERT INTO users VALUES(NULL, ?, ?, ?, ?, 0, 0, 0, 0, 0, 0)", (message.chat.username, int(time.time()), message.from_user.id, referrer_id,))
                 try:
 #                    отправляем пользователю что по его ссылке перешли
                     await bot.send_message(referrer_id, "💎Поздравляю, у вас плюс 1 реферал💎")
@@ -27,13 +27,13 @@ async def process_start_command(message: types.Message):
                     pass
             else:
 #               если пользователь попытался перейти по своей ссылке не регистрируясь при этом выпадает сообщение и регистрирует его как обычного юзера
-                db.change(f"INSERT INTO users VALUES(NULL, ?, ?, ?, NULL, 0, 0, 0, 0, 0)", (message.chat.username, int(time.time()), message.from_user.id,))
+                db.change(f"INSERT INTO users VALUES(NULL, ?, ?, ?, NULL, 0, 0, 0, 0, 0, 0)", (message.chat.username, int(time.time()), message.from_user.id,))
                 await bot.send_message(message.from_user.id,
                                        "❌⚠️Отклонено. Причина:\nпопытка перехода по обственной ссылке⚠️❌"
                                        )
         else:
 #           если пользователь не переходил по ссылке
-            db.change(f"INSERT INTO users VALUES(NULL, ?, ?, ?, NULL, 0, 0, 0, 0, 0)", (message.chat.username, int(time.time()), message.from_user.id,))
+            db.change(f"INSERT INTO users VALUES(NULL, ?, ?, ?, NULL, 0, 0, 0, 0, 0, 0)", (message.chat.username, int(time.time()), message.from_user.id,))
     await message.answer(
         f"Приветствуем вас в нашем <b>маркете!</b> Выберете пункт меню, необходимый вам!🤑",
         parse_mode="html",
@@ -43,12 +43,21 @@ async def process_start_command(message: types.Message):
 # выход из состояний
 @dp.message_handler(state="*", commands='отмена')
 @dp.message_handler(Text(equals='отмена', ignore_case=True), state="*")
+@dp.message_handler(Text(equals='cancel', ignore_case=True), state="*")
+@dp.message_handler(Text(equals='выйти', ignore_case=True), state="*")
+@dp.message_handler(Text(equals='выход', ignore_case=True), state="*")
+@dp.message_handler(Text(equals='back', ignore_case=True), state="*")
+@dp.message_handler(Text(equals='end', ignore_case=True), state="*")
+@dp.message_handler(Text(equals='назад', ignore_case=True), state="*")
+@dp.message_handler(Text(equals='конец', ignore_case=True), state="*")
+@dp.message_handler(Text(equals='стоп', ignore_case=True), state="*")
+@dp.message_handler(Text(equals='остановись', ignore_case=True), state="*")
 async def cancel_handler(message: types.Message, state: FSMContext):
     current_state = await state.get_state()
     if current_state is None:
         return
     await state.finish()
-    await message.reply('✅Успешно отменили', reply_markup=start_keyboard)
+    await message.reply('✅Успешная отмена ввода', reply_markup=start_keyboard)
 
 # записываем цену которую ввели
 @dp.message_handler(state=StateMessage.translation)
@@ -123,33 +132,13 @@ async def add_currency(message: types.Message, state: FSMContext):
             await message.answer("Нельзя вводить сумму больше 100000")
         else:
             await state.update_data(currency=message.text)
-            await message.answer("Введите код валюты\nПример: <b>USDT, TRC</b>")
-            await Payment.network.set()
-
-@dp.message_handler(state=Payment.network)
-async def add_network(message: types.Message, state: FSMContext):
-
-    codmoney = ["USDT", "TRC"]
-    if message.text not in codmoney:
-        await message.answer(f"Нету валюты: <b>{message.text}</b>\nДоступные валюты: <b>USDT, TRC</b>")
-    else:
-        await state.update_data(network=message.text)
-        await message.answer("Введите сетевой код блокчейна\nПример: <b>TRON</b>")
-        await Payment.amount.set()
-
-@dp.message_handler(state=Payment.amount)
-async def add_amount(message: types.Message, state: FSMContext):
-
-    if message.text != "TRON":
-        await message.answer(f"Нету кода: <b>{message.text}</b>\nДоступный код: <b>TRON</b>")
-    else:
-        await state.update_data(amount=message.text)
-        await message.answer("<b>Для получения ссылки нажмите кнопку ниже</b>",
-            reply_markup = InlineKeyboardMarkup(row_width=True).add(
-                InlineKeyboardButton("Сгенерировать ссылку для пополнения баланса", callback_data="replenishment")
+            await message.answer("Выберите код валюты",
+            reply_markup=InlineKeyboardMarkup(row_width=2).add(
+                InlineKeyboardButton(text="USDT", callback_data="USDT"),
+                InlineKeyboardButton(text="TRX", callback_data="TRX")
                 )
             )
-        await Payment.end.set()
+            await Payment.network.set()
 
 # кнопка вывода
 @dp.message_handler(state=PaymentСonclusion.currency)
@@ -223,6 +212,6 @@ async def load_login(message: types.Message, state: FSMContext):
 async def add_password(message: types.Message, state: FSMContext):
     await state.update_data(password=message.text)
     data = await state.get_data()
-    db.change("INSERT INTO games VALUES(NULL, ?, ?, ?, ?, ?)", (data['photo'], data['namegame'], data['password'], data['loginaccount'], data['password']))
-    await message.answer("Аккаунт успешно выставлен на рынок", reply_markup=start_keyboard)
+    db.change("INSERT INTO games VALUES(NULL, ?, ?, ?, ?, ?, ?, ?)", (data['photo'], data['namegame'], data['cengame'], data['loginaccount'], data['password'], message.from_user.id, message.from_user.username))
+    await message.answer("🟢Аккаунт успешно выставлен на рынок🟢", reply_markup=start_keyboard)
     await state.finish()
