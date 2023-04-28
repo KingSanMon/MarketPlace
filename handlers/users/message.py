@@ -34,30 +34,28 @@ async def process_start_command(message: types.Message):
         else:
 #           если пользователь не переходил по ссылке
             db.change(f"INSERT INTO users VALUES(NULL, ?, ?, ?, NULL, 0, 0, 0, 0, 0, 0)", (message.chat.username, int(time.time()), message.from_user.id,))
-    await message.answer(
-        f"Приветствуем вас в нашем <b>маркете!</b> Выберете пункт меню, необходимый вам!🤑",
+    await bot.send_photo(
+        message.from_user.id,
+        photo=types.InputFile(open("photos/image.png", "rb")),
+        caption=f"Приветствуем вас в нашем <b>маркете!</b> Выберете пункт меню, необходимый вам!🤑",
         parse_mode="html",
         reply_markup = start_keyboard
     )
 
 # выход из состояний
 @dp.message_handler(state="*", commands='отмена')
-@dp.message_handler(Text(equals='отмена', ignore_case=True), state="*")
-@dp.message_handler(Text(equals='cancel', ignore_case=True), state="*")
-@dp.message_handler(Text(equals='выйти', ignore_case=True), state="*")
-@dp.message_handler(Text(equals='выход', ignore_case=True), state="*")
-@dp.message_handler(Text(equals='back', ignore_case=True), state="*")
-@dp.message_handler(Text(equals='end', ignore_case=True), state="*")
-@dp.message_handler(Text(equals='назад', ignore_case=True), state="*")
-@dp.message_handler(Text(equals='конец', ignore_case=True), state="*")
-@dp.message_handler(Text(equals='стоп', ignore_case=True), state="*")
-@dp.message_handler(Text(equals='остановись', ignore_case=True), state="*")
+@dp.message_handler(Text(equals=['остановись', 'cancel', 'выйти', 'выход', 'back', 'end', 'назад', 'конец', 'стоп', 'отмена'], ignore_case=True), state="*")
 async def cancel_handler(message: types.Message, state: FSMContext):
     current_state = await state.get_state()
     if current_state is None:
         return
     await state.finish()
-    await message.reply('✅Успешная отмена ввода', reply_markup=start_keyboard)
+    await bot.send_photo(
+        message.from_user.id,
+        photo=types.InputFile(open("photos/image.png", "rb")),
+        caption=f"✅Успешная отмена ввода",
+        reply_markup=start_keyboard
+    )
 
 # записываем цену которую ввели
 @dp.message_handler(state=StateMessage.translation)
@@ -68,10 +66,10 @@ async def add_translation(message: types.Message, state: FSMContext):
     for subtraction_balance in subtraction_balance:
         pass
     if  message.text.replace(".", "", 1).isdigit() == False:
-        await message.answer("🟥 Нельзя вводить ничего кроче числа 🟥")
+        await message.reply("🟥 Нельзя вводить ничего кроче числа 🟥")
     else:
         if subtraction_balance < float(message.text):
-            await message.answer(f"🥲На вашем счету нету такой суммы\nУ вас на счету: {subtraction_balance}$")
+            await message.reply(f"🥲На вашем счету нету такой суммы\nУ вас на счету: {subtraction_balance}$")
         else:
             await state.update_data(translation=message.text)
             await message.answer("◻️Введите NickName пользователя\n◼Важно: вводить nickname без '@'\n🔸Пример ввода: lolzcoder_star")
@@ -149,28 +147,12 @@ async def add_currency(message: types.Message, state: FSMContext):
         await message.answer("🟥 Нельзя вводить ничего кроче числа 🟥")
     else:
         await state.update_data(currency=message.text)
-        await message.answer("Введите код валюты\nПример: USDT")
+        await message.answer("Ввыберите код валюты",
+            reply_markup=InlineKeyboardMarkup(row_width=1).add(
+                InlineKeyboardButton(text="USDT", callback_data="usdt")
+                )
+            )
         await PaymentСonclusion.network.set()
-
-@dp.message_handler(state=PaymentСonclusion.network)
-async def add_network(message: types.Message, state: FSMContext):
-
-    if message.text != "USDT":
-        await message.answer(f"Нету валюты: {message.text}\nНа данный момент доступны: USDT")
-    else:
-        await state.update_data(network=message.text)
-        await message.answer("Введитe сетевой код блокчейна\nПример: TRON")
-        await PaymentСonclusion.address.set()
-
-@dp.message_handler(state=PaymentСonclusion.address)
-async def add_address(message: types.Message, state: FSMContext):
-
-    if message.text != "TRON":
-        await message.answer(f"Нету кода: {message.text}\nНа данный момент доступны: TRON")
-    else:
-        await state.update_data(address=message.text)
-        await message.answer("Введите адресс кошелька\nПример: TYbseqvK6BEbtZzzDoqZnau5PvtfsLJyRa")
-        await PaymentСonclusion.amount.set()
 
 @dp.message_handler(state=PaymentСonclusion.amount)
 async def add_amount(message: types.Message, state: FSMContext):
@@ -213,5 +195,11 @@ async def add_password(message: types.Message, state: FSMContext):
     await state.update_data(password=message.text)
     data = await state.get_data()
     db.change("INSERT INTO games VALUES(NULL, ?, ?, ?, ?, ?, ?, ?)", (data['photo'], data['namegame'], data['cengame'], data['loginaccount'], data['password'], message.from_user.id, message.from_user.username))
-    await message.answer("🟢Аккаунт успешно выставлен на рынок🟢", reply_markup=start_keyboard)
+    await bot.send_photo(
+        message.from_user.id,
+        photo=types.InputFile(open("photos/image.png", "rb")),
+        caption=f"🟢Аккаунт успешно выставлен на рынок🟢",
+        parse_mode=types.ParseMode.HTML,
+        reply_markup=market_keyboard
+    )
     await state.finish()
