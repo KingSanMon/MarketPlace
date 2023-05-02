@@ -44,7 +44,7 @@ async def process_start_command(message: types.Message):
 
 # выход из состояний
 @dp.message_handler(state="*", commands='отмена')
-@dp.message_handler(Text(equals=['остановись', 'cancel', 'выйти', 'выход', 'back', 'end', 'назад', 'конец', 'стоп', 'отмена'], ignore_case=True), state="*")
+@dp.message_handler(Text(equals=['остановись', 'cancel', 'выйти', 'выход', 'back', 'end', 'назад', 'конец', 'отмена'], ignore_case=True), state="*")
 async def cancel_handler(message: types.Message, state: FSMContext):
     current_state = await state.get_state()
     if current_state is None:
@@ -117,7 +117,6 @@ async def add_description(message: types.Message, state: FSMContext):
             )
         await StateMessage.end.set()
 
-
 # состояние кнопки пополнения
 @dp.message_handler(state=Payment.currency)
 async def add_currency(message: types.Message, state: FSMContext):
@@ -139,32 +138,33 @@ async def add_currency(message: types.Message, state: FSMContext):
             await Payment.network.set()
 
 # кнопка вывода
-@dp.message_handler(state=PaymentСonclusion.currency)
+# --------------------------------------------------------------------------------
+@dp.message_handler(state=PaymentСonclusion.amount)
 async def add_currency(message: types.Message, state: FSMContext):
 
 
     if  message.text.replace(".", "", 1).isdigit() == False:
         await message.answer("🟥 Нельзя вводить ничего кроче числа 🟥")
     else:
-        await state.update_data(currency=message.text)
+        await state.update_data(amount=message.text)
         await message.answer("Ввыберите код валюты",
             reply_markup=InlineKeyboardMarkup(row_width=1).add(
                 InlineKeyboardButton(text="USDT", callback_data="usdt")
                 )
             )
-        await PaymentСonclusion.network.set()
+        await PaymentСonclusion.currency.set()
 
-@dp.message_handler(state=PaymentСonclusion.amount)
-async def add_amount(message: types.Message, state: FSMContext):
+@dp.message_handler(state=PaymentСonclusion.address)
+async def add_address(message: types.Message, state: FSMContext):
 
-    await state.update_data(amount=message.text)
-    await message.answer(
-        "Для подтверждения операции нажмите Перейти к выводу",
-        reply_markup = InlineKeyboardMarkup(row_width=True).add(
-            InlineKeyboardButton("🟢Перейти к выводу", callback_data="confirmationwithdrawal"),
+    await state.update_data(address=message.text)
+    await message.answer("Перейти к выводу?",
+        reply_markup=InlineKeyboardMarkup(row_width=1).add(
+            InlineKeyboardButton(text="Перейти", callback_data="confirm")
             )
         )
     await PaymentСonclusion.end.set()
+# ---------------------------------------------------------------------------------
 
 @dp.message_handler(content_types=['photo'], state=AddNewGame.photo)
 async def load_photo(message: types.Message, state: FSMContext):
@@ -180,9 +180,12 @@ async def load_namegame(message: types.Message, state: FSMContext):
 
 @dp.message_handler(state=AddNewGame.cengame)
 async def load_cengame(message: types.Message, state: FSMContext):
-    await state.update_data(cengame=message.text)
-    await AddNewGame.loginaccount.set()
-    await message.reply("Введите логин от аккаунта\nПользователь увидит его только после того как купит")
+    if  message.text.replace(".", "", 1).isdigit() == False:
+        await message.answer("🟥 Нельзя вводить ничего кроче числа 🟥")
+    else:
+        await state.update_data(cengame=message.text)
+        await AddNewGame.loginaccount.set()
+        await message.reply("Введите логин от аккаунта\nПользователь увидит его только после того как купит")
 
 @dp.message_handler(state=AddNewGame.loginaccount)
 async def load_login(message: types.Message, state: FSMContext):
@@ -194,7 +197,7 @@ async def load_login(message: types.Message, state: FSMContext):
 async def add_password(message: types.Message, state: FSMContext):
     await state.update_data(password=message.text)
     data = await state.get_data()
-    db.change("INSERT INTO games VALUES(NULL, ?, ?, ?, ?, ?, ?, ?)", (data['photo'], data['namegame'], data['cengame'], data['loginaccount'], data['password'], message.from_user.id, message.from_user.username))
+    db.change("INSERT INTO games VALUES(NULL, ?, ?, ?, ?, ?, ?, ?, ?)", (data['photo'], data['namegame'], data['cengame'], data['loginaccount'], data['password'], message.from_user.id, message.from_user.username, 1))
     await bot.send_photo(
         message.from_user.id,
         photo=types.InputFile(open("photos/image.png", "rb")),

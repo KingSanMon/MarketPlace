@@ -1,4 +1,5 @@
 from aiogram.types import ReplyKeyboardRemove, ReplyKeyboardMarkup, KeyboardButton, InlineKeyboardButton, InlineKeyboardMarkup
+from telegram_bot_pagination import InlineKeyboardPaginator
 
 start_keyboard = InlineKeyboardMarkup(row_width=2)
 start_keyboard.add(
@@ -127,11 +128,6 @@ buy_accounts_confirmation.add(
     InlineKeyboardButton(text="Отказать", callback_data="accounts")
     )
 
-delete_accounts = InlineKeyboardMarkup(row_width=1)
-delete_accounts.add(
-    InlineKeyboardButton(text="Удалить аккаунт", callback_data="delete")
-    )
-
 def genmarkup(data): # передаём в функцию data
 
     markup = InlineKeyboardMarkup() # создаём клавиатуру
@@ -149,3 +145,47 @@ def myaccount(data): # передаём в функцию data
         InlineKeyboardButton(text="💢 Назад", callback_data="useraccounts")
         )
     return markup #возвращаем клавиатуру
+
+# админ панель
+def accountsReview(data):
+    markup = InlineKeyboardMarkup() # создаём клавиатуру
+    markup.add(*[InlineKeyboardButton(button[2], callback_data=f"baget_{button[0]}") for button in data])
+    markup.add(
+        InlineKeyboardButton(text="💢 Назад", callback_data="backAdmin_panel")
+        )
+    return markup #возвращаем клавиатуру
+
+def reviewComplaints(data):
+    markup = InlineKeyboardMarkup() # создаём клавиатуру
+    markup.add(*[InlineKeyboardButton(button[1], callback_data=f"review_{button[0]}") for button in data])
+    markup.add(
+        InlineKeyboardButton(text="💢 Назад", callback_data="backAdmin_panel")
+        )
+    return markup #возвращаем клавиатуру
+
+admin_start = InlineKeyboardMarkup(row_width=2)
+admin_start.add(
+    InlineKeyboardButton(text="📋Список жалоб", callback_data="complaints_button"),
+    InlineKeyboardButton(text="🚷Бан пользователей", callback_data="ban_users"),
+    InlineKeyboardButton(text="📦Товары для подтрвеждения", callback_data="market_buton_add")
+    ).add(
+    InlineKeyboardButton(text="💸Пополнить баланс пользователя", callback_data="admin_balance_users")
+    )
+
+admin_complaints_back = InlineKeyboardMarkup()
+admin_complaints_back.add(
+    InlineKeyboardButton(text="Вернутся жалобам", callback_data="complaints_button")
+    )
+
+yes_no_button = InlineKeyboardMarkup(row_width=2)
+yes_no_button.add(
+    InlineKeyboardButton(text="✅Да", callback_data="amdin_add_balance"),
+    InlineKeyboardButton(text="💢Назад", callback_data="backAdmin_panel")
+    )
+
+ban_users_button = InlineKeyboardMarkup(row_width=2)
+ban_users_button.add(
+    InlineKeyboardButton(text="Забанить", callback_data="baned_users"),
+    InlineKeyboardButton(text="Разбанить", callback_data="unban_users"),
+    InlineKeyboardButton(text="Назад", callback_data="backAdmin_panel")
+    )
