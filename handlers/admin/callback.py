@@ -24,32 +24,54 @@ async def complaint(call: types.CallbackQuery):
 
 @dp.callback_query_handler(filters.Regexp("review*"))
 async def add_merket(call: types.CallbackQuery):
+
 	review = call.data.split("_")[1]
+
 	dispute = db.get("SELECT * FROM dispute WHERE id = ?", (review,))
 	users = db.get("SELECT * FROM users WHERE user_id = ?", (dispute[1],))
 	cheater = db.get("SELECT * FROM users WHERE user_id = ?", (dispute[3],))
-	await call.message.edit_text(f"📋Новая жалоба\n➖➖➖➖➖➖➖➖\nОт: <b>{users[1]}</b>\n➖➖➖➖➖➖➖➖\nНа: <b>{cheater[1]}</b>\n➖➖➖➖➖➖➖➖\nСумма: {dispute[2]}$",
+
+	await call.message.edit_text(
+		f"📋Новая жалоба\n➖➖➖➖➖➖➖➖\nОт: <b>{users[1]}</b>\n➖➖➖➖➖➖➖➖\nНа: <b>{cheater[1]}</b>\n➖➖➖➖➖➖➖➖\nСумма: {dispute[2]}$",
 		reply_markup=InlineKeyboardMarkup(row_width=2).add(
-			InlineKeyboardButton(text="🔴Забанить", callback_data="ban_chiter"),
+			InlineKeyboardButton(text="🔴Забанить", callback_data=f"bancheat_{cheater[3]}_{users[0]}_{dispute[2]}"),
     		InlineKeyboardButton(text="⬅️Назад", callback_data="complaints_button"),
     		InlineKeyboardButton(text="🟢Закрыть сделку", callback_data=f"complite_sdel_{dispute[0]}")
 			)
 		)
 # Жалобы от пользователей конец--------------------------------------------------------------------------
 
+# Забанить пользователя----------------------------------------------------------------------------------
+@dp.callback_query_handler(filters.Regexp("bancheat"))
+async def baned_cheater(call: types.CallbackQuery):
+
+	ban = call.data.split("_")
+
+	cheater = db.get("SELECT * FROM users WHERE user_id = ?", (ban[1],))
+	users = db.get("SELECT * FROM users WHERE id = ?", (ban[2],))
+
+	db.change("UPDATE users SET ban = ? WHERE user_id = ?", (1, ban[1],))
+
+	await call.message.edit_text(f"⛔️Пользователь {cheater[1]} забанен⛔️", reply_markup=admin_start)
+	await bot.send_message(ban[1], "❌❌Ваш аккаунт был забанен❌❌")
+	await bot.send_message(users[3], f"🟢Пользователь: {cheater[1]} был забанен\nВам на счет вернули: {ban[3]}$")
+# Забанить пользователя конец----------------------------------------------------------------------------
+
 # Закрыть сделку-----------------------------------------------------------------------------------------
 @dp.callback_query_handler(filters.Regexp("complite_sdel*"))
 async def complute(call: types.CallbackQuery):
+
 	complite = call.data.split("_")[2]
+	
 	dispute = db.get("SELECT * FROM dispute WHERE id = ?", (complite,))
 	users = db.get("SELECT * FROM users WHERE user_id = ?", (dispute[1],))
 	cheater = db.get("SELECT * FROM users WHERE user_id = ?", (dispute[3],))
 
 	newbalance = cheater[5] + dispute[2]
-	db.change("UPDATE users SET balance = ? WHERE user_id = ?", (newbalance, dispute[3],))
+	db.change("UPDATE users SET balance = ?, summ_input = ?, transaction_status = ? WHERE user_id = ?", (newbalance, 0, 0, dispute[3],))
 
-	await bot.send_message(users[3], f"делка завершена успешно с пользователем: {cheater[1]}")
-	await bot.send_message(cheater[3], f"делка завершена успешно с пользователем: {users[1]}")
+	await bot.send_message(users[3], f"Администратор закрыл сделку с: {cheater[1]}")
+	await bot.send_message(cheater[3], f"Администратор закрыл сделку с: {users[1]}")
 
 	db.change("DELETE FROM dispute WHERE id = ?", (complite,))
 
@@ -64,6 +86,14 @@ async def button_ban(call: types.CallbackQuery):
 	reply_markup=ban_users_button)
 # Бан пользователей конец--------------------------------------------------------------------------------
 
+# Добавить раздел----------------------------------------------------------------------------------------
+@dp.callback_query_handler(text="add_razdel", state=None)
+async def add_sectiom(call: types.CallbackQuery):
+	await call.message.edit_text("Введите название раздела")
+	await Addsections.name.set()
+
+# Добавить раздел конец----------------------------------------------------------------------------------
+
 # Одобрение товара на рынок------------------------------------------------------------------------------
 @dp.callback_query_handler(text="market_buton_add")
 async def add_market(call: types.CallbackQuery):
@@ -74,7 +104,7 @@ async def add_market(call: types.CallbackQuery):
 		)
 
 @dp.callback_query_handler(filters.Regexp("baget*"))
-async def add_merket(call: types.CallbackQuery):
+async def add_merkets(call: types.CallbackQuery):
 	try:
 		idprod = call.data.split("_")[1]
 		userinfo = db.get("SELECT * FROM games WHERE id = ?", (idprod,))

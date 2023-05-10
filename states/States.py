@@ -21,6 +21,7 @@ class PaymentСonclusion(StatesGroup):
     end = State()
 
 class AddNewGame(StatesGroup):
+    sectionid = State()
     photo = State()
     namegame = State()
     cengame = State()
@@ -34,3 +35,9 @@ class AddBalanceUsers(StatesGroup):
     login = State()
     depositAmount = State()
     end = State()
+
+class Addsections(StatesGroup):
+    name = State()
+
+class Estimation(StatesGroup):
+    estimation = State()

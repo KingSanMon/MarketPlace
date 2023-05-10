@@ -4,14 +4,13 @@ from aiogram.dispatcher import FSMContext
 from keyboards.keyboard import *
 from filters.filters import *
 from states.States import *
+from config import admins
 from aiogram.dispatcher.filters import Text
 
-admins = [317446996, 1290389456]
 # Основные команды-----------------------------------------------------------------------------------------------------------------------------
 @dp.message_handler(commands='admin')
 @dp.message_handler(Text(equals=['admin', 'администратор']))
 async def admin_panel(message: types.Message):
-	global admins
 	if message.from_user.id in admins:
 		print(f"-------Админ {message.from_user.username} зашел навести суету---------")
 		await message.answer(
@@ -25,7 +24,6 @@ async def admin_panel(message: types.Message):
 @dp.message_handler(state="*", commands='отмена')
 @dp.message_handler(Text(equals=['стоп'], ignore_case=True), state="*")
 async def cancel_handler(message: types.Message, state: FSMContext):
-	global admins
 	if message.from_user.id in admins:
 	    current_state = await state.get_state()
 	    if current_state is None:
@@ -68,3 +66,12 @@ async def add_deposit(message: types.Message, state: FSMContext):
 			)
 		await AddBalanceUsers.end.set()
 # пополнение админами баланс юзера конец---------------------------
+
+# Добавление раздела------------------------------------------------------------------
+@dp.message_handler(state=Addsections.name)
+async def add_section(message: types.Message, state: FSMContext):
+	await state.update_data(name=message.text)
+	await message.answer(f"Успешно добавили раздел: {message.text}", reply_markup=admin_start)
+	db.change("INSERT INTO sections VALUES(NULL, ?)", (message.text,))
+	await state.finish()
+# Добавление раздела конец------------------------------------------------------------

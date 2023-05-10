@@ -7,7 +7,7 @@ from filters.filters import *
 
 from commands.set_bot_commands import set_default_commands
 from middleware.middleware import UserUpdateLogin
-# from middleware.middleware import UserBanned
+from middleware.middleware import UserBanned
 
 async def on_startup(dispatcher):
     await set_default_commands(dispatcher)

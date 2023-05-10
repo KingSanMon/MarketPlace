@@ -13,18 +13,18 @@ class UserBanned(BaseMiddleware):
     async def on_process_message(self, message: Message, data: dict):
 
         if not message.from_user.username:
-            await message.answer("<b>Я не могу тебя пустить дальше, у тебя нет @username</b>")
+            await message.answer("Я не могу тебя пустить дальше, у тебя нет @username")
             raise CancelHandler
 
         user_id = message.from_user.id
         if user_id in user_ban_status:
             is_banned = user_ban_status[user_id]
         else:
-            is_banned = db.get("SELECT ban FROM users WHERE userid = ?", (user_id, ))[0]
+            is_banned = db.get("SELECT ban FROM users WHERE user_id = ?", (user_id, ))[0]
             user_ban_status[user_id] = is_banned
 
         if is_banned == 1:
-            await message.answer('<b>🔥 Вы заблокированы</b>')
+            await message.answer('🔥 Вы заблокированы')
             raise CancelHandler
 
     async def on_process_callback_query(self, call: CallbackQuery, data: dict):
@@ -38,11 +38,11 @@ class UserBanned(BaseMiddleware):
         if user_id in user_ban_status:
             is_banned = user_ban_status[user_id]
         else:
-            is_banned = db.get("SELECT ban FROM users WHERE userid = ?", (user_id, ))[0]
+            is_banned = db.get("SELECT ban FROM users WHERE user_id = ?", (user_id, ))[0]
             user_ban_status[user_id] = is_banned
 
         if is_banned == 1:
-            await call.answer('<b>🔥 Вы заблокированы</b>')
+            await call.answer('🔥 Вы заблокированы')
             raise CancelHandler
             
             
