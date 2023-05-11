@@ -41,3 +41,9 @@ class Addsections(StatesGroup):
 
 class Estimation(StatesGroup):
     estimation = State()
+
+class BanUsers(StatesGroup):
+    loginuser = State()
+
+class NotBanUsers(StatesGroup):
+    loginuser = State()    

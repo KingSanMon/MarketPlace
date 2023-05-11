@@ -5,6 +5,7 @@ from aiogram.dispatcher import FSMContext
 from keyboards.keyboard import *
 from filters.filters import *
 from states.States import *
+import config
 import re
 
 # Главное меню-------------------------------------------------------------------------------------------
@@ -55,6 +56,8 @@ async def baned_cheater(call: types.CallbackQuery):
 	await call.message.edit_text(f"⛔️Пользователь {cheater[1]} забанен⛔️", reply_markup=admin_start)
 	await bot.send_message(ban[1], "❌❌Ваш аккаунт был забанен❌❌")
 	await bot.send_message(users[3], f"🟢Пользователь: {cheater[1]} был забанен\nВам на счет вернули: {ban[3]}$")
+
+	config.user_ban_status = {}
 # Забанить пользователя конец----------------------------------------------------------------------------
 
 # Закрыть сделку-----------------------------------------------------------------------------------------
@@ -84,6 +87,16 @@ async def complute(call: types.CallbackQuery):
 async def button_ban(call: types.CallbackQuery):
 	await call.message.edit_text(f"<b>{call.from_user.username}</b>\nВыберите действие которое вам нужно",
 	reply_markup=ban_users_button)
+
+@dp.callback_query_handler(text="baned_users", state=None)
+async def baned_users(call: types.CallbackQuery):
+	await call.message.edit_text("Введите логин пользователя которого нужно <b>забанить</b>")
+	await BanUsers.loginuser.set()
+
+@dp.callback_query_handler(text="unban_users", state=None)
+async def baned_user(call: types.CallbackQuery):
+	await call.message.edit_text(f"Введите логин пользователя которого нужно <b>разбанить</b>")
+	await NotBanUsers.loginuser.set()
 # Бан пользователей конец--------------------------------------------------------------------------------
 
 # Добавить раздел----------------------------------------------------------------------------------------

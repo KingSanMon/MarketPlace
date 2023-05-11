@@ -11,7 +11,7 @@ from middleware.middleware import UserBanned
 
 async def on_startup(dispatcher):
     await set_default_commands(dispatcher)
-    # dp.middleware.setup(UserBanned())
+    dp.middleware.setup(UserBanned())
     dp.middleware.setup(UserUpdateLogin())
 
 if __name__ == '__main__':

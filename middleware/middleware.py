@@ -6,8 +6,7 @@ from aiogram.types import Message, CallbackQuery
 from loader import db
 import time
 import keyboards.keyboard as kb
-
-user_ban_status = {}
+from config import user_ban_status
 
 class UserBanned(BaseMiddleware):
     async def on_process_message(self, message: Message, data: dict):
@@ -18,7 +17,8 @@ class UserBanned(BaseMiddleware):
 
         user_id = message.from_user.id
         if user_id in user_ban_status:
-            is_banned = user_ban_status[user_id]
+            is_banned = db.get("SELECT ban FROM users WHERE user_id = ?", (user_id, ))[0]
+            user_ban_status[user_id] = is_banned
         else:
             is_banned = db.get("SELECT ban FROM users WHERE user_id = ?", (user_id, ))[0]
             user_ban_status[user_id] = is_banned
@@ -28,7 +28,6 @@ class UserBanned(BaseMiddleware):
             raise CancelHandler
 
     async def on_process_callback_query(self, call: CallbackQuery, data: dict):
-        pass
 
         if not call.from_user.username:
             await call.answer("<b>Я не могу тебя пустить дальше, у тебя нет @username</b>", show_alert=True)
@@ -36,7 +35,8 @@ class UserBanned(BaseMiddleware):
 
         user_id = call.from_user.id
         if user_id in user_ban_status:
-            is_banned = user_ban_status[user_id]
+            is_banned = db.get("SELECT ban FROM users WHERE user_id = ?", (user_id, ))[0]
+            user_ban_status[user_id] = is_banned
         else:
             is_banned = db.get("SELECT ban FROM users WHERE user_id = ?", (user_id, ))[0]
             user_ban_status[user_id] = is_banned

@@ -33,6 +33,44 @@ async def cancel_handler(message: types.Message, state: FSMContext):
 	else:
 		await message.answer("🚷У вас не достаточно прав")
 # Основные команды конец-----------------------------------------------------------------------------------------------------------------------
+@dp.message_handler(state=BanUsers.loginuser)
+async def baned_user(message: types.Message, state: FSMContext):
+
+	await state.update_data(loginuser=message.text)
+
+	userban = db.get("SELECT * FROM users WHERE login = ?", (message.text,))
+
+	if not userban:
+		await message.answer(f"💢 Нету пользователя с логином: {message.text} 💢")
+	else:
+		if userban[11] == 1:
+			await message.answer(f"💢 Пользователь: {message.text}, уже забанен 💢", reply_markup=admin_start)
+		else:
+			await message.answer(f"❎Пользователь: {message.text} успешно забанен❎", reply_markup=admin_start)
+			await bot.send_message(userban[3], "‼️ Ваш аккаунт был забанен администраторами ‼️")
+
+			db.change("UPDATE users SET ban = ? WHERE user_id = ?", (1, userban[3]))
+			
+		await state.finish()
+
+@dp.message_handler(state=NotBanUsers.loginuser)
+async def baned_users(message: types.Message, state: FSMContext):
+
+	await state.update_data(loginuser=message.text)
+
+	notban = db.get("SELECT * FROM users WHERE login = ?", (message.text,))
+
+	if not notban:
+		await message.answer(f"💢 Нету пользователя с логином: {message.text} 💢")
+	else:
+		await message.answer(f"❎ Пользователь: <b>{message.text}</b> успешно <b>разбанен</b> ❎", reply_markup=admin_start)
+		await bot.send_message(notban[3], "✅ Вы были разбанены администратором ✅")
+
+		db.change("UPDATE users SET ban = ? WHERE user_id = ?", (0, notban[3]))
+			
+		await state.finish()
+# Бан пользователя------------------------------------------------------
+
 
 # пополнение админами баланс юзера --------------------------------
 # Логин пользователя и его данные
